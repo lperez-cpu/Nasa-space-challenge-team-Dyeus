@@ -39,9 +39,10 @@ const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !=
 const parts = (...xs) => xs.filter(([, v]) => v != null && v !== "").map(([k, v]) => `${k} ${v}`).join(" · ");
 
 // ── Alertas desde `astronaut_log` ──
-// Cada campo *_level distinto de "Normal" es una alerta; su valor se busca tal cual
-// en `plants.condition` (p. ej. "Estrés elevado" → Ashwagandha).
-// `nutrition_level` es opcional: si backend lo agrega, se usa sin tocar código.
+// CUALQUIER columna que termine en `_level` y no diga "Normal" es una alerta; su valor
+// se busca tal cual en `plants.condition` (p. ej. "Estrés elevado" → Ashwagandha).
+// Para sumar un problema nuevo: columna `algo_level` en astronaut_log + fila en plants.
+// Estas columnas conocidas solo agregan un detalle (sueño, energía…) junto a la alerta.
 const LOG_FIELDS = [
   { field: "stress_level", detail: (l) => parts(["Sueño", l.sleep_quality], ["Ánimo", l.mood]) },
   { field: "cognitive_level", detail: (l) => parts(["Energía", l.energy_level]) },
@@ -50,12 +51,29 @@ const LOG_FIELDS = [
   { field: "nutrition_level", detail: () => "Registro nutricional" },
 ];
 
-export const alertsFromLog = (log) =>
-  LOG_FIELDS.filter(({ field }) => log[field] && norm(log[field]) !== "normal").map(({ field, detail }) => ({
-    condition: log[field],
-    trigger: log[field],
-    triggerValue: detail(log) || (log.days_in_space != null ? `Día ${log.days_in_space}` : ""),
-  }));
+const isAlert = (v) => typeof v === "string" && v.trim() !== "" && norm(v) !== "normal";
+
+export const alertsFromLog = (log) => {
+  const known = LOG_FIELDS.map((f) => f.field);
+  const extra = Object.keys(log)
+    .filter((k) => k.endsWith("_level") && !known.includes(k))
+    .sort()
+    .map((field) => ({ field, detail: () => "" }));
+  return [...LOG_FIELDS, ...extra]
+    .filter(({ field }) => isAlert(log[field]))
+    .map(({ field, detail }) => ({
+      condition: log[field],
+      trigger: log[field],
+      triggerValue: detail(log) || (log.days_in_space != null ? `Día ${log.days_in_space}` : ""),
+    }));
+};
+
+// Si varias plantas tratan la misma condición, gana la que tiene respaldo NASA
+// (luego la de menor id, por el orden de la consulta).
+const plantFor = (plants, condition) =>
+  plants
+    .filter((p) => norm(p.condition) === norm(condition))
+    .sort((a, b) => Number(Boolean(b.nasa_backed)) - Number(Boolean(a.nasa_backed)))[0];
 
 // ── Mapeo: tabla `plants` de Supabase → forma que usa SolutionPanel ──
 // Columnas: id, condition, plant_name, active_compound, dose, grow_time_days, effect
@@ -112,7 +130,7 @@ export async function getSolutionData() {
     // Sin registro: alertas de respaldo, para que la demo siempre muestre algo.
     const alerts = log ? alertsFromLog(log) : ACTIVE_ALERTS;
     const prescriptions = alerts.map((alert) => {
-      const row = plants.find((p) => norm(p.condition) === norm(alert.condition));
+      const row = plantFor(plants, alert.condition);
       return row && mapPlant(row, alert);
     }).filter(Boolean);
     if (!log && !prescriptions.length) throw new Error("Ninguna planta coincide con las alertas activas");
