@@ -132,6 +132,11 @@ export default function SolutionPanel({ data = DEFAULT_DATA, onDispensed }) {
         </div>
         <div className="sp-crew">
           <span className="sp-dot sp-dot--live" /> {crew.id} · {crew.name}
+          {crew.missionDay != null && radiation && (
+            <span>
+              · DÍA {crew.missionDay} · {Math.round(crew.missionDay * radiation.rateMsvPerDay)} mSv
+            </span>
+          )}
         </div>
       </header>
 
@@ -143,6 +148,9 @@ export default function SolutionPanel({ data = DEFAULT_DATA, onDispensed }) {
           <span className="sp-sub">Receta Botánica Automática</span>
         </div>
 
+        {prescriptions.length === 0 && (
+          <div className="sp-muted sp-small">Sin alertas activas · no se requiere receta botánica.</div>
+        )}
         <div className="sp-grid">
           {prescriptions.map((rx, i) => (
             <article key={rx.id} className="sp-rx" style={{ animationDelay: `${i * 0.15}s` }}>
@@ -256,7 +264,7 @@ export default function SolutionPanel({ data = DEFAULT_DATA, onDispensed }) {
               <div>
                 <div className="sp-ready-title">CARTUCHO LISTO PARA CULTIVO</div>
                 <div className="sp-muted sp-small">
-                  {approved?.rxTag} · Cosecha estimada en {prescriptions[0]?.harvestDays} días
+                  {approved?.rxTag} · Cosecha estimada en {(prescriptions.find((p) => p.plant === approved?.plant) ?? prescriptions[0])?.harvestDays ?? "—"} días
                 </div>
               </div>
               <button className="sp-reset" onClick={reset} title="Reiniciar demo">↺</button>

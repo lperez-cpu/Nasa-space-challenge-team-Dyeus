@@ -13,7 +13,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
             <h1 className="font-mono text-xs font-bold tracking-[0.14em] text-slate-100 sm:text-sm">
-              BIO-SYNC OS | DEEP SPACE MODE — EARTH DELAY: 24m 12s (100% AUTONOMOUS)
+              PROJECT E.D.E.N. | DEEP SPACE MODE — EARTH DELAY: 24m 12s (100% AUTONOMOUS)
             </h1>
           </div>
 
