@@ -1,39 +1,25 @@
 -- ============================================================
--- Bio-Sync OS · Esquema PROPUESTO para Supabase
--- Pegar en Supabase → SQL Editor → Run.
+-- Bio-Sync OS · Supabase
 --
--- Si ya tienes tus tablas con otros nombres de columnas, no pasa nada:
--- solo hay que ajustar las funciones map*() en src/data/api.js.
+-- YA EXISTE (creada por backend): tabla `plants`
+--   id, condition, plant_name, active_compound, dose, grow_time_days, effect
+--   → src/data/api.js la lee y cruza `condition` con las alertas activas.
+--
+-- Lo de abajo es OPCIONAL: pegar en SQL Editor → Run para sumar funciones.
+-- La app funciona sin esto (usa datos de demo para lo que falte).
 -- ============================================================
 
--- Configuración de la misión (una sola fila)
-create table if not exists mission_config (
-  id               int primary key default 1,
-  crew_id          text,
-  crew_name        text,
-  crew_module      text,
-  rate_msv_per_day numeric not null,       -- tasa de radiación (dato NASA)
-  radiation_source text
-);
+-- 1) Columnas extra en `plants` (se muestran en la tarjeta si existen)
+alter table plants add column if not exists latin_name  text;
+alter table plants add column if not exists nasa_backed boolean default false;  -- "Datos NASA de respaldo (sí/no)"
+alter table plants add column if not exists evidence    text;
 
--- Base de datos de la "farmacia viva" (la tabla de 10-15 filas del plan)
-create table if not exists prescriptions (
-  id               text primary key,
-  condition        text not null,          -- condición detectada
-  trigger_value    text,                   -- valor que disparó la alerta
-  plant            text not null,          -- planta recomendada
-  latin_name       text,
-  effect           text,
-  active_compound  text,                   -- compuesto activo
-  dose             text,                   -- dosis
-  harvest_days     int,                    -- tiempo de cultivo en microgravedad
-  nasa_backed      boolean default false,  -- datos NASA de respaldo (sí/no)
-  evidence         text,
-  active           boolean default true,   -- true = se muestra como receta activa
-  sort             int default 0
-);
+update plants set latin_name = 'Withania somnifera', evidence = 'Evidencia clínica en Tierra (ensayos sobre cortisol)'
+  where plant_name = 'Ashwagandha';
+update plants set latin_name = 'Moringa oleifera', evidence = 'Evidencia nutricional en Tierra'
+  where plant_name = 'Moringa';
 
--- Cartuchos del banco de semillas (auditoría genética)
+-- 2) Cartuchos del banco de semillas (auditoría genética)
 create table if not exists seed_cartridges (
   id             text primary key,
   cartridge      text not null,
@@ -48,41 +34,6 @@ create table if not exists seed_cartridges (
   sort           int default 0
 );
 
--- Registro de cada vez que se dispensa un cartucho (lo escribe el botón)
-create table if not exists dispense_log (
-  id            bigint generated always as identity primary key,
-  cartridge_id  text references seed_cartridges(id),
-  dispensed_at  timestamptz default now()
-);
-
--- ── Seguridad (RLS): el frontend usa la clave pública ────────────────
--- Lectura pública en las tablas de datos, solo inserción en el log.
-alter table mission_config  enable row level security;
-alter table prescriptions   enable row level security;
-alter table seed_cartridges enable row level security;
-alter table dispense_log    enable row level security;
-
-create policy "lectura publica" on mission_config  for select using (true);
-create policy "lectura publica" on prescriptions   for select using (true);
-create policy "lectura publica" on seed_cartridges for select using (true);
-create policy "insertar log"    on dispense_log    for insert with check (true);
-
--- ── Datos iniciales (los mismos de la demo) ─────────────────────────
-insert into mission_config values
-  (1, 'CRW-07', 'Especialista de Misión', 'HAB-2 / Bio-Lab', 1.84, 'MSL/RAD · crucero Tierra–Marte')
-on conflict (id) do nothing;
-
-insert into prescriptions
-  (id, condition, trigger_value, plant, latin_name, effect, active_compound, dose, harvest_days, nasa_backed, evidence, active, sort)
-values
-  ('rx-ashwagandha', 'Cortisol Alto', '28.4 µg/dL', 'Ashwagandha', 'Withania somnifera',
-   'Adaptógeno · reduce estrés y cortisol', 'Withanólidos', '600 mg/día extracto de raíz', 21, false,
-   'Evidencia clínica en Tierra (ensayos sobre cortisol)', true, 1),
-  ('rx-tomate-micro', 'Déficit Vitamínico', 'Vit. C / Licopeno bajos', 'Tomate Micro', 'Solanum lycopersicum (micro)',
-   'Aporte de vitamina C, K y antioxidantes', 'Licopeno · Vitamina C', '1 porción (~50 g) diaria', 28, true,
-   'Tomate enano cultivado en la ISS (Veggie VEG-05)', true, 2)
-on conflict (id) do nothing;
-
 insert into seed_cartridges
   (id, cartridge, plant, viability, status, label, detail, exposure_days, shielding, rx_tag, sort)
 values
@@ -91,3 +42,16 @@ values
   ('cart-gen2', 'Cartucho Gen-2', 'Ashwagandha', 98, 'approved', 'ADN VERIFICADO (AUTORIZADO)',
    'Integridad genómica dentro de tolerancia · bóveda con blindaje de agua', 410, 0.35, 'RX: ASHWAGANDHA GEN-2', 2)
 on conflict (id) do nothing;
+
+-- 3) Registro de cada vez que se pulsa "DISPENSAR CARTUCHO GEN-2"
+create table if not exists dispense_log (
+  id            bigint generated always as identity primary key,
+  cartridge_id  text references seed_cartridges(id),
+  dispensed_at  timestamptz default now()
+);
+
+-- Permisos para la clave pública (anon): leer cartuchos, solo insertar en el log
+alter table seed_cartridges enable row level security;
+alter table dispense_log    enable row level security;
+create policy "lectura publica" on seed_cartridges for select using (true);
+create policy "insertar log"    on dispense_log    for insert to anon with check (true);

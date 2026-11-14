@@ -28,20 +28,39 @@ async function rest(path, { method = "GET", body, prefer } = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-// ── Mapeo: columnas de la base de datos (snake_case) → forma que usa SolutionPanel ──
-const mapPrescription = (r) => ({
-  id: r.id,
-  plant: r.plant,
-  latin: r.latin_name,
-  trigger: r.condition,
-  triggerValue: r.trigger_value,
-  effect: r.effect,
-  compound: r.active_compound,
-  dose: r.dose,
-  harvestDays: r.harvest_days,
-  nasaBacked: r.nasa_backed,
-  evidence: r.evidence,
-});
+// Alertas activas del astronauta → condición de la tabla `plants` que las trata.
+// (Cuando BiometricsPanel lea signos vitales reales, esta lista saldrá de ahí.)
+export const ACTIVE_ALERTS = [
+  { condition: "Estrés elevado", trigger: "Cortisol Alto", triggerValue: "28.4 µg/dL" },
+  { condition: "Déficit vitamina C", trigger: "Déficit Vitamínico", triggerValue: "Índice vitamínico 34%" },
+];
+
+const norm = (s = "") => s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v != null && v !== ""));
+
+// ── Mapeo: tabla `plants` de Supabase → forma que usa SolutionPanel ──
+// Columnas: id, condition, plant_name, active_compound, dose, grow_time_days, effect
+// (latin_name / nasa_backed / evidence son opcionales: si se agregan, se muestran).
+const mapPlant = (r, alert) => {
+  // Completa con los datos de demo si la planta ya existía allí (nombre latino, evidencia…)
+  const extra = mockSolution.prescriptions.find((p) => norm(p.plant) === norm(r.plant_name)) ?? {};
+  return {
+    ...extra,
+    ...clean({
+      id: `plant-${r.id}`,
+      plant: r.plant_name,
+      latin: r.latin_name,
+      trigger: alert.trigger,
+      triggerValue: alert.triggerValue,
+      effect: r.effect,
+      compound: r.active_compound,
+      dose: r.dose,
+      harvestDays: r.grow_time_days,
+      nasaBacked: r.nasa_backed,
+      evidence: r.evidence,
+    }),
+  };
+};
 
 const mapCartridge = (r) => ({
   id: r.id,
@@ -56,28 +75,30 @@ const mapCartridge = (r) => ({
   rxTag: r.rx_tag ?? undefined,
 });
 
+// Tablas opcionales (aún no existen en Supabase): si fallan, se usan los datos de demo.
+const optional = (path) => rest(path).catch(() => []);
+
 /** Lee todo lo que necesita SolutionPanel. Devuelve { data, source: "supabase" | "mock" }. */
 export async function getSolutionData() {
   if (!supabaseEnabled) return { data: mockSolution, source: "mock" };
   try {
-    const [rx, carts, cfg] = await Promise.all([
-      rest("prescriptions?select=*&active=eq.true&order=sort.asc"),
-      rest("seed_cartridges?select=*&order=sort.asc"),
-      rest("mission_config?select=*&id=eq.1"),
+    const [plants, carts] = await Promise.all([
+      rest("plants?select=*&order=id.asc"),
+      optional("seed_cartridges?select=*&order=sort.asc"),
     ]);
-    if (!rx.length || !carts.length) throw new Error("Tablas vacías");
-    const c = cfg[0];
+
+    const prescriptions = ACTIVE_ALERTS.map((alert) => {
+      const row = plants.find((p) => norm(p.condition) === norm(alert.condition));
+      return row && mapPlant(row, alert);
+    }).filter(Boolean);
+    if (!prescriptions.length) throw new Error("Ninguna planta coincide con las alertas activas");
+
     return {
       source: "supabase",
       data: {
-        crew: c
-          ? { id: c.crew_id, name: c.crew_name, module: c.crew_module }
-          : mockSolution.crew,
-        radiation: c
-          ? { rateMsvPerDay: Number(c.rate_msv_per_day), source: c.radiation_source }
-          : mockSolution.radiation,
-        prescriptions: rx.map(mapPrescription),
-        seedVault: carts.map(mapCartridge),
+        ...mockSolution,
+        prescriptions,
+        seedVault: carts.length ? carts.map(mapCartridge) : mockSolution.seedVault,
       },
     };
   } catch (err) {
@@ -86,7 +107,8 @@ export async function getSolutionData() {
   }
 }
 
-/** Registra en Supabase que se dispensó un cartucho (no bloquea la UI si falla). */
+/** Registra en Supabase que se dispensó un cartucho (no bloquea la UI si falla).
+ *  Requiere la tabla `dispense_log` (ver supabase/schema.sql); sin ella solo avisa en consola. */
 export async function logDispense(cartridge) {
   if (!supabaseEnabled || !cartridge) return;
   try {
