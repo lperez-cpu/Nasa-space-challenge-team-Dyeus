@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+@keyframes scan-sweep {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes alert-beacon {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+    border-color: rgba(239, 68, 68, 0.9);
+  }
+  50% {
+    opacity: 0.65;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+}
+
+.animate-scan-sweep {
+  animation: scan-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-alert-beacon {
+  animation: alert-beacon 1.3s ease-in-out infinite;
+}
+
+/* Subtle telemetry grid backdrop for high-contrast sci-fi mission control */
+.bg-telemetry-grid {
+  background-image:
+    linear-gradient(to right, rgba(34, 211, 238, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 211, 238, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
