@@ -28,8 +28,7 @@ async function rest(path, { method = "GET", body, prefer } = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-// Alertas activas del astronauta → condición de la tabla `plants` que las trata.
-// (Cuando BiometricsPanel lea signos vitales reales, esta lista saldrá de ahí.)
+// Alertas de respaldo: se usan solo si `astronaut_log` no existe o está vacía.
 export const ACTIVE_ALERTS = [
   { condition: "Estrés elevado", trigger: "Cortisol Alto", triggerValue: "28.4 µg/dL" },
   { condition: "Déficit vitamina C", trigger: "Déficit Vitamínico", triggerValue: "Índice vitamínico 34%" },
@@ -37,6 +36,26 @@ export const ACTIVE_ALERTS = [
 
 const norm = (s = "") => s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
 const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v != null && v !== ""));
+const parts = (...xs) => xs.filter(([, v]) => v != null && v !== "").map(([k, v]) => `${k} ${v}`).join(" · ");
+
+// ── Alertas desde `astronaut_log` ──
+// Cada campo *_level distinto de "Normal" es una alerta; su valor se busca tal cual
+// en `plants.condition` (p. ej. "Estrés elevado" → Ashwagandha).
+// `nutrition_level` es opcional: si backend lo agrega, se usa sin tocar código.
+const LOG_FIELDS = [
+  { field: "stress_level", detail: (l) => parts(["Sueño", l.sleep_quality], ["Ánimo", l.mood]) },
+  { field: "cognitive_level", detail: (l) => parts(["Energía", l.energy_level]) },
+  { field: "cardiovascular_level", detail: (l) => parts(["FC", l.heart_rate != null ? `${l.heart_rate} lpm` : null]) },
+  { field: "inflammation_level", detail: (l) => (l.symptoms ?? []).join(", ") },
+  { field: "nutrition_level", detail: () => "Registro nutricional" },
+];
+
+export const alertsFromLog = (log) =>
+  LOG_FIELDS.filter(({ field }) => log[field] && norm(log[field]) !== "normal").map(({ field, detail }) => ({
+    condition: log[field],
+    trigger: log[field],
+    triggerValue: detail(log) || (log.days_in_space != null ? `Día ${log.days_in_space}` : ""),
+  }));
 
 // ── Mapeo: tabla `plants` de Supabase → forma que usa SolutionPanel ──
 // Columnas: id, condition, plant_name, active_compound, dose, grow_time_days, effect
@@ -82,23 +101,30 @@ const optional = (path) => rest(path).catch(() => []);
 export async function getSolutionData() {
   if (!supabaseEnabled) return { data: mockSolution, source: "mock" };
   try {
-    const [plants, carts] = await Promise.all([
+    const [plants, carts, logs] = await Promise.all([
       rest("plants?select=*&order=id.asc"),
       optional("seed_cartridges?select=*&order=sort.asc"),
+      optional("astronaut_log?select=*&order=created_at.desc&limit=1"),
     ]);
+    const log = logs[0] ?? null;
 
-    const prescriptions = ACTIVE_ALERTS.map((alert) => {
+    // Con registro: las alertas salen de él (puede no haber ninguna = astronauta estable).
+    // Sin registro: alertas de respaldo, para que la demo siempre muestre algo.
+    const alerts = log ? alertsFromLog(log) : ACTIVE_ALERTS;
+    const prescriptions = alerts.map((alert) => {
       const row = plants.find((p) => norm(p.condition) === norm(alert.condition));
       return row && mapPlant(row, alert);
     }).filter(Boolean);
-    if (!prescriptions.length) throw new Error("Ninguna planta coincide con las alertas activas");
+    if (!log && !prescriptions.length) throw new Error("Ninguna planta coincide con las alertas activas");
 
     return {
       source: "supabase",
       data: {
         ...mockSolution,
+        crew: log?.days_in_space != null ? { ...mockSolution.crew, missionDay: log.days_in_space } : mockSolution.crew,
         prescriptions,
         seedVault: carts.length ? carts.map(mapCartridge) : mockSolution.seedVault,
+        astronautLog: log,
       },
     };
   } catch (err) {
