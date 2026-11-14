@@ -25,7 +25,8 @@ async function rest(path, { method = "GET", body, prefer } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
-  return res.status === 204 ? null : res.json();
+  const text = await res.text(); // 201/204 con "return=minimal" llegan sin cuerpo
+  return text ? JSON.parse(text) : null;
 }
 
 // Alertas de respaldo: se usan solo si `astronaut_log` no existe o está vacía.
@@ -52,7 +53,9 @@ const LOG_FIELDS = [
   { field: "nutrition_level", detail: () => "Registro nutricional", short: () => "" },
 ];
 
-const isAlert = (v) => typeof v === "string" && v.trim() !== "" && norm(v) !== "normal";
+// Valores que significan "sin problema" (se compara el texto completo, no partes).
+const HEALTHY = new Set(["normal", "nominal", "ok", "low", "bajo", "baja", "none", "ninguno", "sin alerta", "estable"]);
+const isAlert = (v) => typeof v === "string" && v.trim() !== "" && !HEALTHY.has(norm(v));
 
 export const alertsFromLog = (log) => {
   const known = LOG_FIELDS.map((f) => f.field);
@@ -178,14 +181,26 @@ export async function getSolutionData() {
   }
 }
 
-/** Registra en Supabase que se dispensó un cartucho (no bloquea la UI si falla).
- *  Requiere la tabla `dispense_log` (ver supabase/schema.sql); sin ella solo avisa en consola. */
+/** Registra en `dispense_log` que se dispensó un cartucho (no bloquea la UI si falla).
+ *  Columnas: plant_id (obligatorio), dose_given, notes, astronaut_log_id. */
 export async function logDispense(cartridge) {
-  if (!supabaseEnabled || !cartridge) return;
+  if (!supabaseEnabled || !cartridge?.plant) return;
   try {
+    const [plants, logs] = await Promise.all([
+      rest(`plants?select=id,dose&plant_name=eq.${encodeURIComponent(cartridge.plant)}&order=id.asc`),
+      optional("astronaut_log?select=id&order=created_at.desc&limit=1"),
+    ]);
+    const plant = plants[0];
+    if (!plant) throw new Error(`La planta "${cartridge.plant}" no está en plants`);
     await rest("dispense_log", {
       method: "POST",
-      body: { cartridge_id: cartridge.id },
+      body: clean({
+        plant_id: plant.id,
+        dose_given: plant.dose,
+        notes: [cartridge.cartridge, cartridge.rxTag, cartridge.viability != null ? `viabilidad ${cartridge.viability}%` : null]
+          .filter(Boolean).join(" · "),
+        astronaut_log_id: logs[0]?.id,
+      }),
       prefer: "return=minimal",
     });
   } catch (err) {
