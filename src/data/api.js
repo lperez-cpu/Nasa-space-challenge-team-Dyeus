@@ -4,8 +4,8 @@
 // - Si faltan las variables de entorno o Supabase falla → usa mockData (la demo nunca se rompe).
 // - Si la compañera de backend usa otros nombres de columnas, solo se ajustan las funciones map*().
 
-import { useEffect, useState } from "react";
-import { solutionData as mockSolution } from "./mockData";
+import { useCallback, useEffect, useState } from "react";
+import { missionData as mockMission, solutionData as mockSolution } from "./mockData";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -43,12 +43,13 @@ const parts = (...xs) => xs.filter(([, v]) => v != null && v !== "").map(([k, v]
 // se busca tal cual en `plants.condition` (p. ej. "Estrés elevado" → Ashwagandha).
 // Para sumar un problema nuevo: columna `algo_level` en astronaut_log + fila en plants.
 // Estas columnas conocidas solo agregan un detalle (sueño, energía…) junto a la alerta.
+// `short` = valor corto para el número grande de la alerta en BiometricsPanel.
 const LOG_FIELDS = [
-  { field: "stress_level", detail: (l) => parts(["Sueño", l.sleep_quality], ["Ánimo", l.mood]) },
-  { field: "cognitive_level", detail: (l) => parts(["Energía", l.energy_level]) },
-  { field: "cardiovascular_level", detail: (l) => parts(["FC", l.heart_rate != null ? `${l.heart_rate} lpm` : null]) },
-  { field: "inflammation_level", detail: (l) => (l.symptoms ?? []).join(", ") },
-  { field: "nutrition_level", detail: () => "Registro nutricional" },
+  { field: "stress_level", detail: (l) => parts(["Sueño", l.sleep_quality], ["Ánimo", l.mood]), short: (l) => parts(["Ánimo", l.mood]) },
+  { field: "cognitive_level", detail: (l) => parts(["Energía", l.energy_level]), short: (l) => parts(["Energía", l.energy_level]) },
+  { field: "cardiovascular_level", detail: (l) => parts(["FC", l.heart_rate != null ? `${l.heart_rate} lpm` : null]), short: (l) => (l.heart_rate != null ? `${l.heart_rate} BPM` : "") },
+  { field: "inflammation_level", detail: (l) => (l.symptoms ?? []).join(", "), short: () => "" },
+  { field: "nutrition_level", detail: () => "Registro nutricional", short: () => "" },
 ];
 
 const isAlert = (v) => typeof v === "string" && v.trim() !== "" && norm(v) !== "normal";
@@ -58,14 +59,37 @@ export const alertsFromLog = (log) => {
   const extra = Object.keys(log)
     .filter((k) => k.endsWith("_level") && !known.includes(k))
     .sort()
-    .map((field) => ({ field, detail: () => "" }));
+    .map((field) => ({ field, detail: () => "", short: () => "" }));
   return [...LOG_FIELDS, ...extra]
     .filter(({ field }) => isAlert(log[field]))
-    .map(({ field, detail }) => ({
+    .map(({ field, detail, short }) => ({
+      field,
+      shortValue: short(log),
       condition: log[field],
       trigger: log[field],
       triggerValue: detail(log) || (log.days_in_space != null ? `Día ${log.days_in_space}` : ""),
     }));
+};
+
+// ── Datos para BiometricsPanel (contrato pedido en HANDOFF_CLAUDE.txt) ──
+// biometrics = { mission, alerts }: `alerts` tiene la forma de vitalSigns.cortisol
+// (alertTitle, alertDetail, value, referenceRange, status). null = usar mockData.
+const buildBiometrics = (log, alerts) => {
+  if (!log) return { mission: mockMission, alerts: null };
+  return {
+    mission: {
+      ...mockMission,
+      missionDay: log.days_in_space != null ? `DÍA ${log.days_in_space}` : mockMission.missionDay,
+    },
+    alerts: alerts.map((a, i) => ({
+      id: `log-${a.field}`,
+      alertTitle: a.condition,
+      alertDetail: a.triggerValue ? `Registro del astronauta · ${a.triggerValue}` : "Registro del astronauta (astronaut_log)",
+      value: a.shortValue || undefined,
+      referenceRange: "Normal",
+      status: i === 0 ? "HIGH" : "ELEVATED",
+    })),
+  };
 };
 
 // Si varias plantas tratan la misma condición, gana la que tiene respaldo NASA
@@ -115,9 +139,11 @@ const mapCartridge = (r) => ({
 // Tablas opcionales (aún no existen en Supabase): si fallan, se usan los datos de demo.
 const optional = (path) => rest(path).catch(() => []);
 
-/** Lee todo lo que necesita SolutionPanel. Devuelve { data, source: "supabase" | "mock" }. */
+const MOCK_RESULT = { data: mockSolution, biometrics: { mission: mockMission, alerts: null }, source: "mock" };
+
+/** Lee lo que necesitan ambos paneles. Devuelve { data, biometrics, source: "supabase" | "mock" }. */
 export async function getSolutionData() {
-  if (!supabaseEnabled) return { data: mockSolution, source: "mock" };
+  if (!supabaseEnabled) return MOCK_RESULT;
   try {
     const [plants, carts, logs] = await Promise.all([
       rest("plants?select=*&order=id.asc"),
@@ -137,6 +163,7 @@ export async function getSolutionData() {
 
     return {
       source: "supabase",
+      biometrics: buildBiometrics(log, alerts),
       data: {
         ...mockSolution,
         crew: log?.days_in_space != null ? { ...mockSolution.crew, missionDay: log.days_in_space } : mockSolution.crew,
@@ -147,7 +174,7 @@ export async function getSolutionData() {
     };
   } catch (err) {
     console.warn("[E.D.E.N.] Supabase no disponible, usando datos de demo:", err);
-    return { data: mockSolution, source: "mock" };
+    return MOCK_RESULT;
   }
 }
 
@@ -166,13 +193,16 @@ export async function logDispense(cartridge) {
   }
 }
 
-/** Hook para App.jsx: arranca con los datos de demo y los reemplaza al llegar Supabase. */
+/** Hook para App.jsx: arranca con los datos de demo y los reemplaza al llegar Supabase.
+ *  Devuelve { data, biometrics, source, loading, refresh } — refresh() vuelve a consultar. */
 export function useSolutionData() {
-  const [state, setState] = useState({ data: mockSolution, source: "mock", loading: supabaseEnabled });
+  const [state, setState] = useState({ ...MOCK_RESULT, loading: supabaseEnabled });
+  const [tick, setTick] = useState(0);
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
   useEffect(() => {
     let alive = true;
     getSolutionData().then((r) => alive && setState({ ...r, loading: false }));
     return () => { alive = false; };
-  }, []);
-  return state;
+  }, [tick]);
+  return { ...state, refresh };
 }

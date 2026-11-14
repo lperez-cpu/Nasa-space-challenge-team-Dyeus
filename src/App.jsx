@@ -3,7 +3,7 @@ import SolutionPanel from './components/SolutionPanel';
 import { useSolutionData, logDispense } from './data/api';
 
 export default function App() {
-  const { data: solutionData } = useSolutionData();
+  const { data: solutionData, biometrics, refresh } = useSolutionData();
 
   return (
     <div className="bg-telemetry-grid min-h-screen bg-[#05080F] text-slate-100">
@@ -28,7 +28,7 @@ export default function App() {
       {/* Main 2-Column Mission Grid */}
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <BiometricsPanel />
+          <BiometricsPanel mission={biometrics.mission} alerts={biometrics.alerts} onRescan={refresh} />
           <SolutionPanel data={solutionData} onDispensed={logDispense} />
         </div>
       </main>
