@@ -1,5 +1,5 @@
 -- ============================================================
--- Bio-Sync OS · Supabase
+-- Project E.D.E.N. · Supabase
 --
 -- YA EXISTE (creada por backend): tabla `plants`
 --   id, condition, plant_name, active_compound, dose, grow_time_days, effect

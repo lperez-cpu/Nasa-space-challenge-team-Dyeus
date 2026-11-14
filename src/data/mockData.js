@@ -68,7 +68,7 @@ export const solutionData = {
 };
 
 export const missionData = {
-  systemName: "BIO-SYNC OS",
+  systemName: "PROJECT E.D.E.N.",
   mode: "DEEP SPACE MODE",
   earthDelay: "24m 12s",
   autonomyStatus: "100% AUTONOMOUS",

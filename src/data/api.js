@@ -102,7 +102,7 @@ export async function getSolutionData() {
       },
     };
   } catch (err) {
-    console.warn("[Bio-Sync] Supabase no disponible, usando datos de demo:", err);
+    console.warn("[E.D.E.N.] Supabase no disponible, usando datos de demo:", err);
     return { data: mockSolution, source: "mock" };
   }
 }
@@ -118,7 +118,7 @@ export async function logDispense(cartridge) {
       prefer: "return=minimal",
     });
   } catch (err) {
-    console.warn("[Bio-Sync] No se pudo registrar el dispensado:", err);
+    console.warn("[E.D.E.N.] No se pudo registrar el dispensado:", err);
   }
 }
 
