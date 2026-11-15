@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: #060911;
-  --color-surface: #0C1320;
-  --color-surface-elevated: #121B2D;
-  --color-border-subtle: #1E293B;
+  --color-canvas: #05070C;
+  --color-surface: #0B0F17;
+  --color-surface-elevated: #111824;
+  --color-border-subtle: #1C2433;
   --color-orbital: #38BDF8;
   --color-orbital-contrast: #04101A;
 }
@@ -27,7 +27,7 @@
     padding: 0;
     min-height: 100dvh;
     overflow-x: clip;
-    background-color: #060911;
+    background-color: #05070C;
     color: #f1f5f9;
   }
 
@@ -70,10 +70,10 @@
   animation: alert-beacon 1.6s ease-in-out infinite;
 }
 
-/* Subtle telemetry grid backdrop */
+/* Precision flight-deck hairline grid */
 .bg-telemetry-grid {
   background-image:
-    linear-gradient(to right, rgba(56, 189, 248, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
-  background-size: 36px 36px;
+    linear-gradient(to right, rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
 }

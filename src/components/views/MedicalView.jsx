@@ -11,7 +11,7 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
         aria-label="Active Clinical Alerts"
         role="alert"
         aria-live="polite"
-        className="rounded-2xl border border-slate-800 bg-[#0C1320] p-6"
+        className="rounded-2xl border border-slate-800 bg-[#0B0F17] p-6"
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-4">
           <div>
@@ -85,7 +85,7 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
       {/* 2. Living Pharmacy Prescriptions */}
       <section
         aria-label="Living Pharmacy - Automated Botanical Prescription"
-        className="rounded-2xl border border-slate-800 bg-[#0C1320] p-6"
+        className="rounded-2xl border border-slate-800 bg-[#0B0F17] p-6"
       >
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div className="flex items-center gap-3">

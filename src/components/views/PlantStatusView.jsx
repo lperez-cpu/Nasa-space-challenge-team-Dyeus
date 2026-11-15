@@ -1,4 +1,5 @@
 import { Droplets, Leaf, Sparkles, Sun, Thermometer } from 'lucide-react';
+import RadialGauge from '../RadialGauge';
 
 const CHAMBER_METRICS = [
   { label: 'Nutrient pH', value: '5.8', icon: Droplets, status: 'SIMULATED' },
@@ -56,12 +57,12 @@ export default function PlantStatusView({
       {/* 1. Hydroponic Bay & Active Cultures */}
       <section
         aria-label="Hydroponic Cultivation Bay"
-        className="rounded-2xl border border-slate-800 bg-[#0C1320] p-6"
+        className="rounded-lg border border-[#1C2433] bg-[#0B0F17] p-6"
       >
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-[#1C2433] pb-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-400/35 bg-emerald-400/10 text-emerald-300">
-              <Leaf className="h-5 w-5" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-md border border-emerald-400/35 bg-emerald-400/10 text-emerald-300">
+              <Leaf className="h-4 w-4" />
             </span>
             <div>
               <p className="font-mono text-[11px] font-semibold tracking-[0.18em] text-emerald-300 uppercase">
@@ -91,7 +92,7 @@ export default function PlantStatusView({
             return (
               <div
                 key={m.label}
-                className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#080D17] px-4 py-3"
+                className="flex items-center justify-between rounded-md border border-[#1C2433] bg-[#070A10] px-4 py-3"
               >
                 <div className="flex items-center gap-2.5">
                   <Icon className="h-4 w-4 text-sky-400" />
@@ -110,9 +111,9 @@ export default function PlantStatusView({
           })}
         </div>
 
-        {/* Active Plant Progress Cards */}
+        {/* Active Plant Progress Cards with Radial Rings */}
         {activeCultures.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-[#080D17] p-5 text-sm text-slate-400">
+          <div className="rounded-lg border border-[#1C2433] bg-[#070A10] p-5 text-sm text-slate-400">
             No cartridges currently in cultivation. Dispense an authorized cartridge from the{' '}
             <strong className="text-slate-200">Dispenser</strong> module to initiate a hydroponic cycle.
           </div>
@@ -121,38 +122,36 @@ export default function PlantStatusView({
             {activeCultures.map((item) => (
               <article
                 key={item.key}
-                className="flex flex-col justify-between gap-4 rounded-xl border border-slate-800 bg-[#080D17] p-5"
+                className="flex flex-col justify-between gap-4 rounded-lg border border-[#1C2433] bg-[#070A10] p-5"
               >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-100">{item.plant}</h3>
-                      {item.latin && (
-                        <p className="text-xs italic text-slate-400">{item.latin}</p>
-                      )}
-                    </div>
-                    <span className="rounded-md border border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-300">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-100">{item.plant}</h3>
+                    {item.latin && (
+                      <p className="text-xs italic text-slate-400">{item.latin}</p>
+                    )}
+                    <span className="mt-2 inline-block rounded border border-emerald-500/40 bg-emerald-950/40 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
                       {item.stage}
                     </span>
+                    <p className="mt-2.5 font-mono text-xs text-slate-400 tabular-nums">
+                      DAY {item.elapsedDays} OF {item.totalDays}
+                    </p>
                   </div>
 
-                  <div className="mt-4">
-                    <div className="mb-1.5 flex items-center justify-between font-mono text-xs">
-                      <span className="text-slate-400">GROWTH PROGRESS</span>
-                      <span className="font-bold text-sky-300 tabular-nums">
-                        DAY {item.elapsedDays} / {item.totalDays} ({item.progressPct}%)
-                      </span>
-                    </div>
-                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400"
-                        style={{ width: `${item.progressPct}%` }}
-                      />
-                    </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <RadialGauge
+                      value={item.progressPct}
+                      size={60}
+                      strokeWidth={5}
+                      color="stroke-emerald-400"
+                    />
+                    <span className="font-mono text-[9px] tracking-wider text-slate-500 uppercase">
+                      GROWTH
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-slate-800 pt-3 font-mono text-[11px] text-slate-400">
+                <div className="flex items-center justify-between border-t border-[#1C2433] pt-3 font-mono text-[11px] text-slate-400">
                   <span>UNIT: {item.cartridge}</span>
                   <span className="tabular-nums">{item.timestamp}</span>
                 </div>
@@ -162,12 +161,12 @@ export default function PlantStatusView({
         )}
       </section>
 
-      {/* 2. Full Botanical Catalog from Backend (`plants` table) */}
+      {/* 2. Botanical Registry */}
       <section
         aria-label="Botanical Catalog from Backend"
-        className="rounded-2xl border border-slate-800 bg-[#0C1320] p-6"
+        className="rounded-lg border border-[#1C2433] bg-[#0B0F17] p-6"
       >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-[#1C2433] pb-4">
           <div>
             <p className="font-mono text-[11px] font-semibold tracking-[0.18em] text-sky-300 uppercase">
               Supabase Botanical Registry
@@ -182,7 +181,7 @@ export default function PlantStatusView({
           {prescriptions.map((plant) => (
             <article
               key={plant.id}
-              className="flex flex-col justify-between gap-3 rounded-xl border border-slate-800 bg-[#080D17] p-4"
+              className="flex flex-col justify-between gap-3 rounded-lg border border-[#1C2433] bg-[#070A10] p-4"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
@@ -209,7 +208,7 @@ export default function PlantStatusView({
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 pt-2.5 font-mono text-[11px]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#1C2433] pt-2.5 font-mono text-[11px]">
                 <span className="text-amber-300/90">TARGET: {plant.condition || 'General'}</span>
                 <span className="text-sky-300 tabular-nums">
                   {plant.harvestDays ?? '—'} DAYS GROW

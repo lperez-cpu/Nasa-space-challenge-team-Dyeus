@@ -54,7 +54,7 @@ export default function DispenserView({
   return (
     <section
       aria-label="Capsule Dispenser"
-      className="flex flex-col gap-6 rounded-2xl border border-slate-800 bg-[#0C1320] p-6"
+      className="flex flex-col gap-6 rounded-2xl border border-slate-800 bg-[#0B0F17] p-6"
     >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
