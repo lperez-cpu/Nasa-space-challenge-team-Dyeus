@@ -133,9 +133,33 @@ const radiationFor = (day) => {
   };
 };
 
+// ── Fuente de cada dato: el equipo real de la NASA que lo produciría en la ISS ──
+// (doc del equipo "Fuentes y Etiquetas NASA"). En la demo los datos llegan de astronaut_log
+// (cargados a mano o por el Arduino que simula el wearable): por eso `sourceSimulated`.
+export const DATA_SOURCES = {
+  // Enlaces del doc del equipo; los que no están verificados quedan en null.
+  bioMonitor: { name: "Bio-Monitor (Astroskin smart shirt)", url: "https://www.nasa.gov/mission_pages/station/research/experiments/explorer/Facility.html?#id=7392" },
+  actiwatch: { name: "Actiwatch Spectrum", url: null },
+  everyWear: { name: "EveryWear app (crew self-report)", url: "https://www.nasa.gov/mission_pages/station/research/experiments/explorer/Investigation.html?#id=2042" },
+  rad: { name: "MSL/RAD cruise dose rate (Zeitlin et al., Science 2013)", url: null },
+  veggie: { name: "Veggie (Vegetable Production System)", url: "https://www.nasa.gov/missions/station/so-you-want-to-be-a-space-farmer/" },
+  aph: { name: "Advanced Plant Habitat (APH)", url: "https://science.nasa.gov/mission/advanced-plant-habitat/" },
+};
+const src = (key, simulated = true) => ({ source: DATA_SOURCES[key].name, sourceUrl: DATA_SOURCES[key].url, sourceSimulated: simulated });
+
+const VITAL_SOURCE = { heartRate: "bioMonitor", spo2: "bioMonitor", circadianDrift: "actiwatch", radiationDose: "rad" };
+const ALERT_SOURCE = {
+  stress_level: "actiwatch", inflammation_level: "everyWear", cognitive_level: "everyWear",
+  cardiovascular_level: "bioMonitor", nutrition_level: "everyWear", bone_level: "everyWear",
+};
+const withVitalSources = (vitals) =>
+  Object.fromEntries(Object.entries(vitals).map(([k, v]) => [
+    k, VITAL_SOURCE[k] && v ? { ...v, ...src(VITAL_SOURCE[k], k !== "radiationDose") } : v,
+  ]));
+
 // Forma que usan BiometricsPanel / MedicalView (igual que vitalSigns.cortisol).
 const buildBiometrics = (log, alerts) => {
-  if (!log) return { mission: missionFor(null), alerts: null, vitals: mockVitals };
+  if (!log) return { mission: missionFor(null), alerts: null, vitals: withVitalSources(mockVitals) };
   const day = log.days_in_space;
   const hr = log.heart_rate;
   return {
@@ -147,8 +171,9 @@ const buildBiometrics = (log, alerts) => {
       value: a.value || a.level,
       referenceRange: "Normal: LOW",
       status: a.level === "HIGH" ? "HIGH" : "ELEVATED",
+      ...src(ALERT_SOURCE[a.field] ?? "everyWear"),
     })),
-    vitals: {
+    vitals: withVitalSources({
       ...mockVitals,
       radiationDose: radiationFor(day),
       heartRate: hr == null ? mockVitals.heartRate : {
@@ -157,7 +182,7 @@ const buildBiometrics = (log, alerts) => {
         referenceRange: "60 – 100 BPM",
         status: hr > 100 ? "ELEVATED" : hr < 60 ? "LOW" : "NOMINAL",
       },
-    },
+    }),
   };
 };
 
@@ -170,7 +195,16 @@ const plantFor = (plants, condition) =>
     .filter((p) => norm(p.condition) === norm(condition))
     .sort((a, b) => Number(Boolean(b.nasa_backed)) - Number(Boolean(a.nasa_backed)))[0];
 
+// En qué invernadero de la NASA ya se cultivó la planta (solo las nasa_backed).
+const APH_PLANTS = /chile|pepper|capsicum|r[aá]bano|radish|trigo|wheat|arabidopsis/i;
+const habitatFor = (r) => {
+  if (!r.nasa_backed) return { habitat: null, habitatLabel: "Candidate · not yet grown in Veggie or APH" };
+  const key = APH_PLANTS.test(`${r.plant_name} ${r.latin_name ?? ""}`) ? "aph" : "veggie";
+  return { habitat: key === "aph" ? "APH" : "Veggie", habitatLabel: `Grown in ${DATA_SOURCES[key].name}`, habitatUrl: DATA_SOURCES[key].url };
+};
+
 const mapPlant = (r, trigger, triggerValue) => clean({
+  ...habitatFor(r),
   id: `plant-${r.id}`,
   plantId: r.id,
   plant: r.plant_name,
@@ -230,7 +264,7 @@ const optional = (path) => rest(path).catch(() => []);
 
 const MOCK_RESULT = {
   data: mockSolution,
-  biometrics: { mission: missionFor(null), alerts: null, vitals: mockVitals },
+  biometrics: { mission: missionFor(null), alerts: null, vitals: withVitalSources(mockVitals) },
   source: "mock",
 };
 
