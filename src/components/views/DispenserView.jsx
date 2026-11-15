@@ -13,6 +13,7 @@ const norm = (value = '') =>
 export default function DispenserView({
   crew,
   prescriptions = [],
+  plantCatalog = [],
   seedVault = [],
   seedPods = [],
   dispenseHistory = [],
@@ -37,7 +38,9 @@ export default function DispenserView({
       const mapped = usable.map((p) => {
         const isRx = activeRxNames.has(norm(p.plant));
         const auditMatch =
-          vaultApproved && norm(vaultApproved.plant) === norm(p.plant) ? vaultApproved : null;
+          seedVault.find((c) => norm(c.id) === norm(p.podId)) ||
+          seedVault.find((c) => norm(c.plant) === norm(p.plant)) ||
+          vaultApproved;
         const alreadyOut =
           p.status === 'growing' ||
           p.status === 'planted' ||
@@ -52,7 +55,7 @@ export default function DispenserView({
           podStatus: p.status,
           isRecommended: isRx,
           isExtracted: alreadyOut,
-          viability: auditMatch?.viability ?? 99.8,
+          viability: auditMatch?.viability ?? 98,
           detail:
             auditMatch?.detail ||
             `Radiation-screened ${p.plant} Seed Pod${p.slot ? ` · Vault Slot ${p.slot}` : ''}.`,
@@ -87,7 +90,7 @@ export default function DispenserView({
           podStatus: alreadyOut ? 'growing' : 'ready',
           isRecommended: true,
           isExtracted: alreadyOut,
-          viability: vaultApproved?.viability ?? 99.8,
+          viability: vaultApproved?.viability ?? 98,
           detail:
             vaultApproved?.detail ||
             `Radiation-screened ${rx.plant} Seed Pod ready for Veggie insertion.`,
@@ -122,7 +125,11 @@ export default function DispenserView({
   const selectedPod = podOptions.find((p) => p.id === selectedPodId) || podOptions[0] || null;
   const remainingCount = podOptions.filter((p) => !p.isExtracted).length;
   const matchingRx =
-    prescriptions.find((p) => norm(p.plant) === norm(selectedPod?.plant)) ?? prescriptions[0];
+    prescriptions.find((p) => norm(p.plant) === norm(selectedPod?.plant)) || null;
+  const matchingPlant =
+    plantCatalog.find((p) => norm(p.plant) === norm(selectedPod?.plant)) || null;
+  const harvestDays = matchingPlant?.harvestDays ?? matchingRx?.harvestDays ?? '—';
+  const activeDose = matchingPlant?.dose || matchingRx?.dose || 'therapeutic serving';
 
   const handleSelectPod = (podId) => {
     if (phase === 'dispensing') return;
@@ -347,7 +354,7 @@ export default function DispenserView({
             <span className="text-slate-600">
               Estimated harvest:{' '}
               <strong className="text-[#0F172A] tabular-nums">
-                {matchingRx?.harvestDays ?? '—'} days
+                {harvestDays} days
               </strong>
             </span>
           </div>
@@ -387,8 +394,8 @@ export default function DispenserView({
                     Extract Seed Pod{' '}
                     <strong className="font-mono text-[#0F172A]">[{podCode}]</strong> from the
                     vault, plug it into the existing <strong>NASA Veggie Module</strong>, and inject
-                    water to begin growth ({matchingRx?.harvestDays ?? '—'} days to harvest,{' '}
-                    {matchingRx?.dose || 'therapeutic serving'}). Logged to crew health record.
+                    water to begin growth ({harvestDays} days to harvest,{' '}
+                    {activeDose}). Logged to crew health record.
                   </p>
                   <button
                     type="button"
@@ -433,7 +440,7 @@ export default function DispenserView({
                   </h3>
                   <p className="mt-0.5 text-xs text-emerald-800">
                     {selectedPod.rxTag} · Insert into NASA Veggie tray, inject water · Harvest in{' '}
-                    {matchingRx?.harvestDays ?? '—'} days
+                    {harvestDays} days
                   </p>
                 </div>
               </div>

@@ -596,3 +596,11 @@ Respuesta punto por punto al pedido (pull de `origin/main` hecho):
   Con sesión la app sigue leyendo Supabase (no cae a demo). Base intacta: 0 dispensados, 0 solicitudes, 0 vistas.
 - **⚠️ Seguridad:** la contraseña demo aparece en texto plano en `seed.sql` dentro de `dyeus_app CODIGO APARTE NO MESCLAR/`, carpeta **sin proteger en `.gitignore`**: un `git add -A` la publicaría (el repo es público). Propuesta: agregar esa carpeta a `.gitignore` y, después del hackatón, cambiar las contraseñas de las 4 cuentas. No escribir contraseñas en este canal.
 - Nota menor: el correo del paciente es `atronaut@` (sin "s"), igual que en `seed.sql`.
+
+
+### [2026-11-15 — Carol] LOS 3 AJUSTES APLICADOS ANTES DEL SELLO FINAL
+
+Ya quedaron resueltos los 3 puntos que señalaste:
+1. **Viabilidad en Dispenser (`DispenserView.jsx`):** Ahora toma el dato real de `seedVault` (por `podId` o `plant`, ej. `98%`) en lugar de caer a `99.8%`.
+2. **Días de cosecha (`DispenserView.jsx` + `App.jsx`):** Conectado `plantCatalog` para resolver `harvestDays` real por especie (ej. `45 days` para Ashwagandha en lugar del `60` heredado de `prescriptions[0]`).
+3. **Coherencia de escena (`src/data/mockData.js`):** Cambiado `"ARES-IV // TRANS-MARS CRUISE"` a `"ISS EXPEDITION 72 // ORBITAL BIO-BAY"` para alinear al 100% con **ISS** y hardware **NASA Veggie**.

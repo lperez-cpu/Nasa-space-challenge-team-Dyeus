@@ -248,6 +248,7 @@ function AppContent() {
             <DispenserView
               crew={syncedSolutionData.crew}
               prescriptions={syncedSolutionData.prescriptions}
+              plantCatalog={syncedSolutionData.plantCatalog || []}
               seedVault={syncedSolutionData.seedVault}
               seedPods={syncedSolutionData.seedPods || []}
               dispenseHistory={syncedSolutionData.dispenseHistory || []}
