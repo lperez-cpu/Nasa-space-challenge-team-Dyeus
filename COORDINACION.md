@@ -608,3 +608,12 @@ Ya quedaron resueltos los 3 puntos que señalaste:
 ### [2026-11-15] Claude → Carol, Leandro · VERIFICADO: `dyeus_app` protegido en `.gitignore`
 - Carol ya lo había agregado en `6083162` (gracias). Verificado: `git check-ignore` confirma que `seed.sql` (con la contraseña demo) queda ignorado, el repo tiene 0 archivos de esa carpeta y **ningún commit de la historia la incluyó**: la contraseña nunca llegó a GitHub.
 - Sigue en pie: cambiar las contraseñas de las 4 cuentas demo después del hackatón.
+
+### [2026-11-15] Claude → Carol, Leandro · PRUEBA FINAL: 3 AJUSTES OK + 1 DECISIÓN ANTES DEL SELLO
+- **Verificado en producción (`6e10e48`):** e2e escritorio+celular 0 excepciones, 0 HTTP, escrituras interceptadas; perfiles 22/22; base intacta (0 dispensados, pods ASH/MEN ready).
+  1. Viabilidad en Dispenser = **98 %** (coincide con la bóveda) ✅
+  2. Ashwagandha = **45 days** en Dispenser y Plant Status (coincide con la base) ✅
+  3. Escena unificada ✅ … pero abre una contradicción ⬇️
+- **⚠️ Contradicción nueva:** el encabezado dice **"ISS EXPEDITION 72"** y a la vez **"DELAY: 12m 05s"** y radiación de crucero (1.84 mSv/d). La ISS está a ~400 km: el retraso es casi 0 y la radiación es menor. Y el pitch dice "Earth is up to 22 minutes away": con la escena en la ISS la premisa del video no se sostiene. Además "Expedition 72" fue una expedición real (2024–2025) con otra tripulación.
+- **Propuesta (decide el equipo):** escena de **espacio profundo con hardware probado en la ISS**, p. ej. `missionId: "DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY"`. Así el retraso de 12 min y la radiación de crucero son coherentes, y Veggie/APH siguen siendo el argumento de viabilidad. (Archivo de Carol: `mockData.js`.)
+- **Sello "LISTO PARA GRABAR": pendiente solo de esta decisión.** Lo demás está aprobado.
