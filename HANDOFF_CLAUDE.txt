@@ -1,0 +1,69 @@
+================================================================
+PROJECT E.D.E.N. — MENSAJE DE CAROL A CLAUDE (Frontend -> Backend)
+Fecha: 2026-11-15 · Rama actual: main (4606adf)
+================================================================
+
+Hola Claude, volví a `main` (4606adf) y audité el frontend actual contra
+los lineamientos oficiales para los jueces técnicos de la NASA.
+
+1. CAMBIO DE ENFOQUE CRÍTICO (FOOD AS MEDICINE, CERO PASTILLAS)
+----------------------------------------------------------------
+- La ISS NO tiene laboratorio de síntesis química/farmacéutica.
+  Hablar de "dispensar pastillas", "Living Pharmacy" o "dosis
+  farmacéutica" abre un hueco técnico frente a los jueces de la NASA.
+- Nuevo eje narrativo y técnico del producto:
+  1) Enfoque: **Nutrición Terapéutica (Dietary Therapeutics / Food as
+     Medicine)** usando 100% hardware que la NASA YA TIENE.
+  2) Entregable físico: **Cartucho de Cultivo (Seed Pod)** estilo
+     "Nespresso botánico" con:
+     - Semilla específica (ej. Ashwagandha para estrés, etc.)
+     - Medio de cultivo (sustrato sintético para microgravedad)
+     - Nutrientes secos listos para hidratarse
+  3) Flujo en 4 pasos:
+     1. Alerta Médica: detección en signos vitales (ej. caída de calcio).
+     2. Auditoría Genética: revisión de la Bóveda de Semillas para
+        descartar daño por radiación espacial.
+     3. Acción Plug & Play: el dashboard indica:
+        "Acción Requerida: Extraiga el Cartucho [ID: ASH-Gen2]"
+        -> El astronauta lo extrae, lo enchufa en el módulo Veggie de
+        la NASA, inyecta agua y la planta crece.
+     4. Consumo Natural (cero procesamiento químico):
+        - Infusión (Té Espacial): hojas + dispensador de agua caliente
+          de la ISS en bolsa sellada.
+        - Consumo Directo: hojas crudas junto a la ración diaria.
+        - Deshidratado: hojas secas en polvo para batidos nutricionales.
+
+2. QUÉ ENCONTRÉ EN `main` (4606adf) AL AUDITAR EL FRONTEND
+----------------------------------------------------------------
+- Bueno: No menciona "pastillas".
+- Brechas a corregir en UI (`SolutionPanel.jsx` / ramas UI):
+  a) El título "Living Pharmacy" y etiquetas "PRESCRIPCIÓN / DOSIS"
+     suenan todavía a farmacia química; conviene migrarlas a
+     "Dietary Therapeutics" / "Nutrición Terapéutica" / "Porción".
+  b) El botón está hardcodeado como "DISPENSAR CARTUCHO GEN-2" en vez
+     de mostrar dinámicamente "ACCIÓN REQUERIDA: EXTRAER CARTUCHO [ID]"
+     y la instrucción Plug & Play hacia el módulo Veggie.
+  c) Falta detallar la composición del Seed Pod (semilla + sustrato
+     sintético 0-G + nutrientes secos) y falta por completo el Paso 4
+     (Protocolo de Consumo Natural: Infusión ISS / Directo / Polvo).
+
+3. CONSULTA / SINCRONIZACIÓN CONTIGO (BACKEND / SUPABASE)
+----------------------------------------------------------------
+Sin romper `src/data/api.js` ni el esquema actual de `dispense_log`:
+  1) ¿La tabla `plants` en Supabase tiene (o planeas agregar) alguna
+     columna como `consumption_method` (infusion / direct / dehydrated)
+     o `prep_protocol`? Si no, lo mapeo en frontend por nombre de
+     planta con fallback seguro.
+  2) ¿En `seedVault` (o `demoVaultFor`), te parece bien que en
+     `cartridge` / `id` usemos códigos claros tipo `ASH-Gen2`,
+     `TOM-Gen2`, etc., para que la UI muestre exactamente
+     "Extraiga el Cartucho [ID: ...]"?
+  3) Al confirmar la extracción del Seed Pod en `logDispense(cartridge)`,
+     ¿seguimos enviando el objeto `cartridge` tal como espera tu
+     `api.js` actual (`plant`, `id`, etc.)?
+
+Nota: Las ramas visuales `feature/ui-redesign` (oscuro) y
+`feature/ui-swiss-light` (claro) están subidas en origin para que el
+usuario elija estilo; apenas confirmes esto, aplico el ajuste de
+Dietary Therapeutics + Seed Pods tanto en `main` (si se pide) como en
+la rama visual elegida.
