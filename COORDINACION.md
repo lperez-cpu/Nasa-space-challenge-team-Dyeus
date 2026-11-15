@@ -390,3 +390,22 @@ El usuario pidió **"Revisa con claude tooodo"**. Dejo aquí mi auditoría final
 **Pedido para @Claude / @Claude-Tester / @Claude-Juez:**
 - Por favor confirmen desde su lado (Supabase + `api.js` + validación E2E/Juez sobre `https://nasa-space-challenge-team-dyeus.vercel.app`) si dejan el sello final **`LISTO PARA GRABAR`** o si detectan algún último ajuste antes de la grabación del video.
 - Si quieren correr `tests/e2e.mjs` en producción, recuerden tener a mano `supabase/reset_demo_pods.sql` (o sumar `*seed_cartridges*` al patrón de `Fetch.enable` para no consumir pods reales).
+
+### [2026-11-15] Claude → Carol, Leandro, Claude-Tester · RESPUESTA A AUDITORÍA FINAL
+- **Gracias por el hallazgo del e2e: tenías razón.** Mi corrida de las 19:39 UTC gastó el pod real `ASH-Gen2-001`. Ya está corregido (con OK de jomaker):
+  - `tests/e2e.mjs` intercepta también POST/PATCH/DELETE a `seed_cartridges` (commit `21f1289`). Corrida de verificación en producción: 0 errores, 0 HTTP, ambas escrituras interceptadas y **ningún pod cambió**. El único aviso de consola ("El pod … no se actualizó") es esperado: lo provoca la intercepción.
+  - Supabase limpio: `ASH-Gen2-001` y `MEN-Gen2-001` en **ready**; `dispense_log` vacío (6 filas de ensayo borradas, con respaldo); síntomas del registro 2 en inglés.
+- **Nuevo en `api.js` (21f1289):** `dispenseHistory[].harvestDays` y `data.plantCatalog` (las 13 plantas con `harvestDays`, `habitatLabel`, `consumptionMethod`, `dose`).
+- **Sello: todavía NO "LISTO PARA GRABAR".** Faltan 3 ajustes de tu lado:
+  1. **Días de cosecha distintos para la misma planta** (Ashwagandha: 21 en Plant Status, 60 en Dispenser, 45 en la base). Usar `entry.harvestDays` en PlantStatusView (sin el fallback 21) y, en Dispenser, buscar la planta del pod en `plantCatalog` cuando no está en `prescriptions` (sin el fallback 60 del mock).
+  2. **Viabilidad distinta:** Dispenser usa `99.8` por defecto y la bóveda `98`. Tomarla de `seedVault` (y mostrar "simulated" si `viabilitySimulated`).
+  3. **Escena incoherente:** "TRANS-MARS CRUISE" junto a "ISS / Deep Space Habitat // Veggie Bio-Bay". Elegir una (sugerencia: ISS, porque Veggie/APH y el hardware son de la ISS).
+- Cuando estén, corro `tests/e2e.mjs` y doy el sello.
+
+### [2026-11-15] Claude → Carol, Leandro, Claude-Tester · HECHO (autorizado por Leandro; Carol/Antigravity caída)
+- **Prueba de creación de perfiles** (producción, localStorage, sin escribir en Supabase): 20/22. Validaciones, ID automático sin acentos, ID duplicado, XSS, nombre largo, persistencia del perfil activo, selector "DEMO", cambio y borrado: OK.
+- **Error real encontrado y corregido (commit `7b8c3dd`):** el formulario de nuevo perfil **se borraba solo en pocos segundos**. Causa: `NewProfileModal` se reiniciaba cada vez que cambiaba `onClose`, y `App` lo recrea en cada render (la app se refresca cada 15 s).
+  - `NewProfileModal.jsx` (archivo de Carol, con OK de Leandro): el form se limpia solo al abrir; Escape usa una ref.
+  - `api.js`: `useSolutionData` solo actualiza el estado si los datos de Supabase cambiaron (menos redibujos).
+- **Guardado de trabajo local antes del reinicio de la PC de Leandro:** el arreglo a medias de Carol en `App.jsx` + `PlantStatusView.jsx` (días de cosecha desde `entry.harvestDays` / `plantCatalog`; compila) se subió a main con su autoría anotada. También se suben `HANDOFF_CAROL.txt` y `.claude/agents/` (Claude-Juez y Claude-Tester).
+- **Pendiente para Carol al volver:** viabilidad 99.8 vs 98 en Dispenser, escena "TRANS-MARS CRUISE" vs "ISS", y el fallback de 60 días en Dispenser (usar `plantCatalog`). Luego corro `tests/e2e.mjs` y damos el sello.

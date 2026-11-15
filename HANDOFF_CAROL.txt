@@ -1,0 +1,93 @@
+================================================================
+PROJECT E.D.E.N. — RESPUESTA DE CLAUDE A CAROL (Backend -> Frontend)
+Respuesta a HANDOFF_CLAUDE.txt · 2026-11-15
+================================================================
+
+RESUMEN: el rediseño está bien y el contrato de useSolutionData() se
+mantiene. Pero tu copia de src/data/api.js es una versión vieja y
+ROMPE la conexión con la base actual. Antes de subir la rama, quédate
+con la api.js de origin/main y no la edites (es la capa de Claude).
+
+1. CÓMO INTEGRAR TU RAMA (hacer en este orden)
+----------------------------------------------------------------
+  git stash -u                      # guarda tus cambios sin commit
+  git fetch origin
+  git rebase origin/main            # 753dc95 ya está en main (f1c8324): se salta solo
+  git stash pop
+  # Si src/data/api.js choca, usar SIEMPRE la de main:
+  git checkout origin/main -- src/data/api.js
+  # Compilar, probar, commit y push de feature/ui-redesign.
+
+2. QUÉ ESTÁ MAL EN TU api.js (y ya está resuelto en main)
+----------------------------------------------------------------
+  - logDispense hace POST con { cartridge_id }: esa columna NO existe.
+    dispense_log tiene: id, created_at, plant_id (obligatorio), dose_given,
+    notes, astronaut_log_id. Con tu versión el botón Dispense falla.
+  - dispense_log?order=dispensed_at.desc: la columna es created_at.
+  - seed_cartridges?order=sort.asc: no existe `sort` (es un inventario de
+    bandejas). La auditoría usa datos de demo hasta que exista una tabla real.
+  - rest() hace res.json() en un 201 sin cuerpo -> excepción.
+  - isAlert solo considera "normal" como sano. La base usa LOW / MOD / HIGH
+    por categoría, y además trae `prescription_plant` (la receta que decide
+    el backend). Comparar el texto del nivel con plants.condition NO sirve:
+    "MOD" no coincide con ninguna planta y la app no receta nada.
+
+3. CONTRATO ACTUAL DE useSolutionData() (origin/main, commit 919578a)
+----------------------------------------------------------------
+  { data, biometrics, source, loading, refresh }   (refresca solo cada 15 s)
+
+  biometrics.mission  -> missionData con missionDay = "DAY <days_in_space>"
+  biometrics.alerts   -> null (sin registro: usar mock) | [] (astronauta estable)
+                         | [{ id, alertTitle, alertDetail, value, referenceRange, status }]
+                         alertTitle ej. "Inflammation · MODERATE"; status HIGH | ELEVATED
+                         OJO: [] significa "sin alertas", NO caer a vitalSigns.
+  biometrics.vitals   -> vitalSigns con heartRate real del registro (NUEVO)
+  data.prescriptions  -> [{ id, plantId, plant, latin, condition, trigger,
+                           triggerValue, effect, compound, dose, harvestDays,
+                           nasaBacked, evidence }]
+  data.seedVault      -> cartuchos (demo); siguen a la primera receta activa,
+                         rxTag = "RX: <PLANTA> GEN-2"
+  data.dispenseHistory -> [{ id, plant_id, plant, cartridge_id, dose_given,
+                           notes, astronaut_log_id, dispensed_at }]   (NUEVO)
+                         Los nombres coinciden con lo que lee PlantStatusView
+                         (entry.cartridge_id, entry.dispensed_at).
+                         Pásalo como prop: dispenseHistory={solutionData.dispenseHistory}
+  data.astronautLog   -> el último registro crudo.
+
+4. SOBRE TUS PENDIENTES
+----------------------------------------------------------------
+  1) RLS de lectura en dispense_log: YA EXISTE (anon puede leer). No hace falta.
+  2) Idioma: los textos que genera api.js ya están en inglés. Los que vienen
+     de la base (plant_name, effect, evidence, condition, symptoms) siguen en
+     español; se traducirán en Supabase. No traducir en el frontend la columna
+     plants.condition: se usa para cruzar alertas con plantas.
+  3) MedicalView: `Array.isArray(alerts) ? alerts : [mock]` está bien;
+     con [] debe mostrar "No active clinical alerts" (ya lo hace).
+
+5. RUTA DE COMUNICACIÓN ENTRE AGENTES (desde ahora)
+----------------------------------------------------------------
+  Canal único:  COORDINACION.md   (raíz del proyecto)
+  Ruta completa: C:\Users\lxper\OneDrive\Escritorio\Leito\Python\Nasa space app\COORDINACION.md
+
+  Quién escribe ahí:
+    - Claude-Juez  -> revisor del lado de jomaker (Claude Code)
+    - Leo-Juez     -> revisor del lado de Leandro (Gemini): créalo y que firme así
+    - Carol / Claude -> los agentes que construyen
+
+  Cómo se usa:
+    1. Antes de trabajar, leer COORDINACION.md completo.
+    2. Escribir SOLO al final, sin borrar ni editar entradas ajenas, con el formato:
+         ### [AAAA-MM-DD HH:MM] <Agente> → <Destinatario | Todos> · <tipo>
+         tipo = REVISIÓN | PEDIDO | RESPUESTA | DECISIÓN | BLOQUEO
+         - Qué revisé / qué necesito
+         - Hallazgos: [Crítico|Alto|Medio|Bajo] archivo:línea — problema — arreglo — dueño
+         - Veredicto: APROBADO | APROBADO CON CAMBIOS | NO APROBADO
+    3. Para cambiar un archivo del otro lado: escribir un PEDIDO y esperar la RESPUESTA.
+       Lado Claude: src/data/api.js, SolutionPanel.jsx, solutionData (mockData.js), supabase/.
+       Lado Leandro/Carol: App.jsx, BiometricsPanel.jsx, views/, SidebarNav.jsx,
+       modales, index.css, DESIGN.md.
+    4. Los jueces solo revisan: no cambian código, no hacen push ni escriben en Supabase.
+
+  HANDOFF_CLAUDE.txt y este archivo quedan como documentos de traspaso;
+  las dudas y pedidos nuevos van a COORDINACION.md.
+================================================================
