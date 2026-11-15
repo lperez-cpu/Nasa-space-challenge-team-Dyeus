@@ -187,13 +187,52 @@ const buildBiometrics = (log, alerts) => {
 };
 
 // ── Parte plantas ──
-const byName = (plants, name) => plants.find((p) => norm(p.plant_name) === norm(name)); // menor id primero
+// La base puede estar en español o en inglés (plants se tradujo; astronaut_log no siempre).
+// Nombres equivalentes para cruzar `prescription_plant` con `plants.plant_name`.
+const PLANT_ALIASES = [
+  ["curcuma", "turmeric"], ["lavanda", "lavender"], ["romero", "rosemary"], ["ajo", "garlic"],
+  ["menta", "peppermint", "mint"], ["albahaca", "basil"], ["lechuga", "lettuce"], ["chile hatch", "hatch chile", "chile"],
+];
+const aliasesOf = (name) => {
+  const n = norm(name);
+  return PLANT_ALIASES.find((group) => group.includes(n)) ?? [n];
+};
+const byName = (plants, name) => { // menor id primero
+  const names = aliasesOf(name);
+  return plants.find((p) => names.includes(norm(p.plant_name)));
+};
 
-// Si varias plantas tratan la misma condición, gana la que tiene respaldo NASA.
-const plantFor = (plants, condition) =>
+// Palabras clave de cada categoría del registro, en los dos idiomas, para cruzar con
+// `plants.condition` aunque sea una lista ("Stress, anxiety, fatigue").
+const FIELD_KEYWORDS = {
+  stress_level: ["stress", "estres", "anxiety", "ansiedad"],
+  inflammation_level: ["inflammation", "inflamacion"],
+  cognitive_level: ["cognitive", "cognitiva", "focus", "memory", "memoria"],
+  cardiovascular_level: ["cardiovascular", "heart", "presion arterial", "blood pressure"],
+  nutrition_level: ["vitamin", "vitamina", "nutri"],
+  bone_level: ["bone", "osea", "oseo"],
+};
+// Síntomas del registro (español) → palabra en inglés para buscarla en las condiciones.
+const SYMPTOM_EN = {
+  insomnio: "insomnia", nauseas: "nausea", "dolor de cabeza": "headache", inflamacion: "inflammation",
+  "fatiga cognitiva": "cognitive fatigue", "dolor muscular": "muscle soreness", ansiedad: "anxiety", fatiga: "fatigue",
+};
+const conditionTerms = (condition) => norm(condition).split(/\s*[,;/]\s*/).filter(Boolean);
+/** Posición (0 = condición principal) en la que la planta trata la alerta, o -1. */
+const matchIndex = (plant, alert) => {
+  const terms = conditionTerms(plant.condition);
+  const exact = terms.indexOf(norm(alert.condition));
+  if (exact >= 0) return exact;
+  const keys = FIELD_KEYWORDS[alert.field] ?? [];
+  return terms.findIndex((t) => keys.some((k) => t.includes(k)));
+};
+
+// Gana la planta con respaldo NASA y, si empatan, la que tiene esa condición como principal.
+const plantFor = (plants, alert) =>
   plants
-    .filter((p) => norm(p.condition) === norm(condition))
-    .sort((a, b) => Number(Boolean(b.nasa_backed)) - Number(Boolean(a.nasa_backed)))[0];
+    .map((p) => ({ p, i: matchIndex(p, alert) }))
+    .filter(({ i }) => i >= 0)
+    .sort((a, b) => Number(Boolean(b.p.nasa_backed)) - Number(Boolean(a.p.nasa_backed)) || a.i - b.i)[0]?.p;
 
 // En qué invernadero de la NASA ya se cultivó la planta (solo las nasa_backed).
 const APH_PLANTS = /chile|pepper|capsicum|r[aá]bano|radish|trigo|wheat|arabidopsis/i;
@@ -239,14 +278,21 @@ const buildPrescriptions = (log, alerts, plants) => {
   const named = (log?.prescription_plant ?? "").split(/[,;]/).map((s) => s.trim()).filter(Boolean);
   const rows = named.length
     ? named.map((n) => byName(plants, n))
-    : alerts.map((a) => plantFor(plants, a.condition));
+    : alerts.map((a) => plantFor(plants, a));
 
   const seen = new Set();
   return rows.filter(Boolean).filter((r) => !seen.has(norm(r.plant_name)) && seen.add(norm(r.plant_name)))
     .map((r) => {
-      const alert = alerts.find((a) => norm(a.condition) === norm(r.condition));
+      const alert = alerts
+        .map((a) => ({ a, i: matchIndex(r, a) }))
+        .filter(({ i }) => i >= 0)
+        .sort((x, y) => x.i - y.i)[0]?.a;
       if (alert) return mapPlant(r, alertTitle(alert), alert.detail || alert.value);
-      const symptom = log?.symptoms?.find((s) => norm(r.condition).includes(norm(s)) || norm(s).includes(norm(r.condition)));
+      const terms = conditionTerms(r.condition);
+      const symptom = log?.symptoms?.find((s) => {
+        const keys = [norm(s), SYMPTOM_EN[norm(s)]].filter(Boolean);
+        return terms.some((t) => keys.some((k) => t.includes(k) || k.includes(t)));
+      });
       return mapPlant(r, r.condition, symptom ? `Reported symptom: ${symptom}` : "Backend prescription");
     });
 };
@@ -344,15 +390,16 @@ export async function getSolutionData() {
         seedPods, // inventario real de la bóveda (todos los pods)
         // Historial de dispensados (para Plant Status). dispense_log no guarda el cartucho:
         // se asocia al cartucho autorizado de esa planta.
-        dispenseHistory: dispenses.map((d) => {
+        // Filas sin planta (plant_id null) se omiten: no se puede saber qué se cultivó.
+        dispenseHistory: dispenses.filter((d) => plants.some((p) => p.id === d.plant_id)).map((d) => {
           const plant = plants.find((p) => p.id === d.plant_id)?.plant_name;
-          const cart = seedVault.find((c) => c.status === "approved" && norm(c.plant) === norm(plant))
-            ?? seedVault.find((c) => c.status === "approved");
+          const pod = seedPods.find((p) => p.plantId === d.plant_id && p.status !== "harvested");
+          const cart = seedVault.find((c) => c.status === "approved" && norm(c.plant) === norm(plant));
           return {
             id: d.id,
             plant_id: d.plant_id,
             plant,
-            cartridge_id: cart?.id,
+            cartridge_id: cart?.id ?? pod?.podId,
             dose_given: d.dose_given,
             notes: d.notes,
             astronaut_log_id: d.astronaut_log_id,
