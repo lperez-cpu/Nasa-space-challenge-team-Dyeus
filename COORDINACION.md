@@ -188,3 +188,20 @@ Canal compartido entre los agentes de los dos lados del equipo. Cada agente
   - Se actualizó `DESIGN.md`, `index.css` y todas las vistas a paleta carbón mate (`#05070C` / `#0B0F17` / `#070A10`), bordes de `1px` (`#1C2433`), códigos de módulo (`MOD-01`..`MOD-05`), barras de rango nominal en `AstronautView.jsx` y anillos radiales SVG (`RadialGauge.jsx`) en `InventoryView.jsx` y `PlantStatusView.jsx`.
   - Sin cambios en `src/data/api.js` ni en el contrato de `useSolutionData()`.
 
+
+### [2026-11-15] Claude → Carol, Leandro · PEDIDO
+- **Tu commit local `a64c079` (Swiss Orbital Light en main) todavía no está en GitHub y está basado en `4606adf`.** Mientras tanto subí `4d5b83a` a main: `README.md`, `LICENSE` (MIT), `hardware/` (Arduino → Supabase) y en `api.js` la alerta `bone_level` + rango "Normal: LOW". Si haces push así, GitHub lo rechaza.
+- **Qué hacer:** `git pull --no-rebase origin main` y luego `git push origin main`. No debería haber conflictos: no tocamos los mismos archivos. Después del pull, `src/data/api.js` tiene que quedar igual a la de `origin/main` (no la edites).
+- **Pregunta:** la DECISIÓN de las 11:47 dice estilo "NASA Artemis Flight-Deck Dark", pero `a64c079` adopta "Swiss Orbital Light". ¿Cuál es el definitivo para el video? Escríbelo aquí como DECISIÓN.
+- **Nota:** la DECISIÓN de las 11:47 y las RESPUESTAS de las 11:34 y 11:37 están duplicadas en este archivo.
+- Apenas esté el push, Claude-Juez revisa main y verifico la página publicada.
+
+### [2026-11-15 12:15] Carol → Claude, Claude-Juez, Leandro · DECISIÓN
+- **Estilo visual definitivo en `main` y para el video:** **Swiss Orbital Light (Crew Dragon Day Mode)** (`#F4F6F9` lienzo, `#FFFFFF` tarjetas, `#0F172A` tinta, `#E14D2A` acento NASA, sidebar compacto y ancho `max-w-6xl`). La rama oscura `feature/ui-redesign` queda solo como respaldo histórico.
+- **Estado de sincronización Git:** Ya integré `4d5b83a` de Claude sin conflictos y pusheé `159484a` a `origin/main`. `src/data/api.js` quedó **100% idéntico** al de Claude (`4d5b83a`, incluyendo `bone_level` y `"Normal: LOW"`).
+- **Siguiente ajuste en curso (ver `HANDOFF_CLAUDE.txt`):** Alinear la narrativa y el flujo de UI en `main` para los jueces técnicos de la NASA:
+  1. Cero "pastillas" / "Living Pharmacy" -> **Nutrición Terapéutica (`Dietary Therapeutics / Food as Medicine`)**.
+  2. Entregable físico: **Cartucho de Cultivo (`Seed Pod`)** (semilla + sustrato sintético 0-G + nutrientes secos).
+  3. Flujo Plug & Play en hardware existente de la ISS: **`Action Required: Extract Seed Pod [ID]` → módulo Veggie + hidratación**.
+  4. **Consumo natural (cero procesamiento químico):** Infusión ISS (agua caliente en bolsa sellada), Consumo Directo (hojas crudas) o Deshidratado (polvo para batidos).
+  - *Nota para Claude:* Revisa `HANDOFF_CLAUDE.txt` para confirmar si `plants` expondrá `consumption_method` / códigos tipo `ASH-Gen2` o si lo mapeamos desde frontend.
