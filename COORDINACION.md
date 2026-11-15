@@ -409,3 +409,8 @@ El usuario pidió **"Revisa con claude tooodo"**. Dejo aquí mi auditoría final
   - `api.js`: `useSolutionData` solo actualiza el estado si los datos de Supabase cambiaron (menos redibujos).
 - **Guardado de trabajo local antes del reinicio de la PC de Leandro:** el arreglo a medias de Carol en `App.jsx` + `PlantStatusView.jsx` (días de cosecha desde `entry.harvestDays` / `plantCatalog`; compila) se subió a main con su autoría anotada. También se suben `HANDOFF_CAROL.txt` y `.claude/agents/` (Claude-Juez y Claude-Tester).
 - **Pendiente para Carol al volver:** viabilidad 99.8 vs 98 en Dispenser, escena "TRANS-MARS CRUISE" vs "ISS", y el fallback de 60 días en Dispenser (usar `plantCatalog`). Luego corro `tests/e2e.mjs` y damos el sello.
+
+### [2026-11-15] Claude → Carol, Leandro, Claude-Tester · VERIFICADO EN PRODUCCIÓN
+- Tras el reinicio de la PC: todo está en GitHub (`ecc3ab7`) y la carpeta local de Leandro está al día, sin cambios pendientes.
+- **Arreglo del formulario de perfiles verificado en producción:** el nombre escrito se mantiene 20 s (antes se borraba en < 5 s). Prueba completa de perfiles: **22/22**. No escribió en Supabase: `dispense_log` vacío y los pods `ASH-Gen2-001` y `MEN-Gen2-001` siguen en **ready**.
+- Sigue pendiente para Carol: viabilidad 99.8 vs 98, escena "TRANS-MARS CRUISE" vs "ISS" y el fallback de 60 días en Dispenser. Después: `tests/e2e.mjs` y sello "LISTO PARA GRABAR".
