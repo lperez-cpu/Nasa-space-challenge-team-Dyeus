@@ -25,11 +25,21 @@ const STATUS_STYLES = {
   NOMINAL: 'border-emerald-500/50 bg-emerald-950/30 text-emerald-300',
 };
 
-export default function BiometricsPanel() {
+export default function BiometricsPanel({
+  profile = astronautProfile,
+  mission = missionData,
+  vitals = vitalSigns,
+  alerts,
+  onRescan,
+}) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanPhaseIdx, setScanPhaseIdx] = useState(0);
   const [scanCount, setScanCount] = useState(1);
-  const [lastSync, setLastSync] = useState(astronautProfile.lastSync);
+  const [lastSync, setLastSync] = useState(profile.lastSync);
+
+  useEffect(() => {
+    setLastSync(profile.lastSync);
+  }, [profile.id, profile.lastSync]);
   const timersRef = useRef([]);
 
   useEffect(() => {
@@ -62,17 +72,20 @@ export default function BiometricsPanel() {
       setLastSync(utcTime);
       setScanCount((prev) => prev + 1);
       setIsScanning(false);
+      onRescan?.();
     }, SCAN_PHASES.length * 600);
 
     timersRef.current.push(completeTimer);
   };
 
   const secondaryVitals = [
-    vitalSigns.heartRate,
-    vitalSigns.spo2,
-    vitalSigns.radiationDose,
-    vitalSigns.circadianDrift,
+    vitals.heartRate,
+    vitals.spo2,
+    vitals.radiationDose,
+    vitals.circadianDrift,
   ];
+
+  const activeAlerts = Array.isArray(alerts) ? alerts : [vitals.cortisol, vitals.vitamins];
 
   return (
     <section
@@ -101,14 +114,14 @@ export default function BiometricsPanel() {
               Módulo Telemetría Biométrica
             </h2>
             <p className="font-mono text-[11px] text-slate-400">
-              {missionData.missionId} • {missionData.missionDay}
+              {mission.missionId} • {mission.missionDay}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 font-mono text-[11px] font-medium text-emerald-300">
           <Radio className="h-3.5 w-3.5 animate-pulse" />
-          <span>{astronautProfile.suitLink}</span>
+          <span>{profile.suitLink}</span>
         </div>
       </div>
 
@@ -122,17 +135,17 @@ export default function BiometricsPanel() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold tracking-tight text-white">
-                  {astronautProfile.name}
+                  {profile.name}
                 </h3>
                 <span className="rounded border border-slate-700 bg-slate-800/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-300">
-                  {astronautProfile.id}
+                  {profile.id}
                 </span>
               </div>
               <p className="text-xs font-medium text-cyan-300/90">
-                {astronautProfile.role}
+                {profile.role}
               </p>
               <p className="mt-0.5 font-mono text-[11px] text-slate-400">
-                {astronautProfile.vessel}
+                {profile.vessel}
               </p>
             </div>
           </div>
@@ -140,11 +153,11 @@ export default function BiometricsPanel() {
           <div className="grid grid-cols-2 gap-x-5 gap-y-1 text-right font-mono text-[11px]">
             <div>
               <span className="text-slate-500">GRUPO: </span>
-              <span className="font-semibold text-slate-200">{astronautProfile.bloodType}</span>
+              <span className="font-semibold text-slate-200">{profile.bloodType}</span>
             </div>
             <div>
               <span className="text-slate-500">EVA: </span>
-              <span className="font-semibold text-slate-200">{astronautProfile.evaHours}</span>
+              <span className="font-semibold text-slate-200">{profile.evaHours}</span>
             </div>
             <div className="col-span-2">
               <span className="text-slate-500">ÚLT. SYNC: </span>
@@ -158,68 +171,57 @@ export default function BiometricsPanel() {
       <div className="flex flex-col gap-3" role="alert" aria-live="polite">
         <div className="flex items-center justify-between">
           <span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-red-400 uppercase">
-            Alertas Clínicas Activas (2)
+            Alertas Clínicas Activas ({activeAlerts.length})
           </span>
           <span className="font-mono text-[11px] text-slate-400 tabular-nums">
             CICLO #{String(scanCount).padStart(3, '0')}
           </span>
         </div>
 
-        {/* Alert 1: Cortisol Alto */}
-        <div className="animate-alert-beacon flex items-start justify-between gap-4 rounded-lg border-2 border-red-500/80 bg-red-950/55 p-3.5">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-xs font-bold tracking-wider text-red-200 uppercase">
-                  {vitalSigns.cortisol.alertTitle}
-                </span>
-                <span className="rounded bg-red-500 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
-                  {vitalSigns.cortisol.status}
-                </span>
+        {activeAlerts.map((alertItem, idx) => {
+          const Icon = idx % 2 === 0 ? AlertTriangle : ShieldAlert;
+          return (
+            <div
+              key={alertItem.id || idx}
+              className="animate-alert-beacon flex items-start justify-between gap-4 rounded-lg border-2 border-red-500/80 bg-red-950/55 p-3.5"
+            >
+              <div className="flex items-start gap-3">
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs font-bold tracking-wider text-red-200 uppercase">
+                      {alertItem.alertTitle}
+                    </span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold text-white ${
+                        alertItem.status === 'CRITICAL' ? 'bg-red-600' : 'bg-red-500'
+                      }`}
+                    >
+                      {alertItem.status}
+                    </span>
+                  </div>
+                  {alertItem.alertDetail && (
+                    <p className="mt-1 text-xs text-red-200/85">
+                      {alertItem.alertDetail}
+                    </p>
+                  )}
+                  {alertItem.referenceRange && (
+                    <p className="mt-1 font-mono text-[11px] text-red-300/75">
+                      REF: {alertItem.referenceRange}
+                    </p>
+                  )}
+                </div>
               </div>
-              <p className="mt-1 text-xs text-red-200/85">
-                {vitalSigns.cortisol.alertDetail}
-              </p>
-              <p className="mt-1 font-mono text-[11px] text-red-300/75">
-                REF: {vitalSigns.cortisol.referenceRange}
-              </p>
+              {alertItem.value && (
+                <div className="shrink-0 text-right">
+                  <span className="font-mono text-xl font-bold text-red-300 tabular-nums">
+                    {alertItem.value}
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
-          <div className="shrink-0 text-right">
-            <span className="font-mono text-xl font-bold text-red-300 tabular-nums">
-              {vitalSigns.cortisol.value}
-            </span>
-          </div>
-        </div>
-
-        {/* Alert 2: Déficit Vitamínico */}
-        <div className="animate-alert-beacon flex items-start justify-between gap-4 rounded-lg border-2 border-red-500/80 bg-red-950/55 p-3.5">
-          <div className="flex items-start gap-3">
-            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-xs font-bold tracking-wider text-red-200 uppercase">
-                  {vitalSigns.vitamins.alertTitle}
-                </span>
-                <span className="rounded bg-red-600 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
-                  {vitalSigns.vitamins.status}
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-red-200/85">
-                {vitalSigns.vitamins.alertDetail}
-              </p>
-              <p className="mt-1 font-mono text-[11px] text-red-300/75">
-                REF: {vitalSigns.vitamins.referenceRange}
-              </p>
-            </div>
-          </div>
-          <div className="shrink-0 text-right">
-            <span className="font-mono text-xl font-bold text-red-300 tabular-nums">
-              {vitalSigns.vitamins.value}
-            </span>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
       {/* Secondary Vitals Grid */}
