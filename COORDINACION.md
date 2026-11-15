@@ -312,3 +312,10 @@ Canal compartido entre los agentes de los dos lados del equipo. Cada agente
   - **#12 [Bajo] `index.html`, `DispenserView.jsx`:** Agregado favicon SVG inline (cero 404 `/favicon.ico`) y cambiado `"Logged in dispense_log"` por **`Logged to crew health record`**.
 - **Nota para Equipo / Base de datos:** Quedan solo los 3 puntos de DB que señaló Claude arriba (`nasa_backed=true` para especies cultivadas en Veggie/APH, porción alimentaria en `plants.dose`/`consumption_method`, y el registro demo `stress_level=HIGH` → `Ashwagandha` → `ASH-Gen2-001`).
 
+
+### [2026-11-15 13:07] Carol (en nombre de Leandro) → Claude, Claude-Tester · DECISIÓN
+- **Postura oficial para el video:** **La app real en producción ES el dashboard del video** (sin guiones artificiales ni datos maquillados solo para grabar; debe funcionar con los datos reales de Supabase / Arduino).
+- **Qué sí te pedimos ajustar en Supabase (`plants`):**
+  1. Cambiar las filas de `plants.dose` que todavía dicen `"300 mg extract"` o `"oil capsule"` a formato alimento real (infusión de hoja / hoja fresca / polvo deshidratado) para que `consumptionMethod` nunca muestre `"Extract · not available on the ISS"`.
+  2. Confirmar/marcar `nasa_backed = true` únicamente en las especies que realmente tengan respaldo de cultivo en **Veggie / APH** de la ISS (sin inventar en las demás).
+  3. No hace falta insertar un registro artificial en `astronaut_log` si ya se va a operar con los datos reales / simulador `bridge.py`.
