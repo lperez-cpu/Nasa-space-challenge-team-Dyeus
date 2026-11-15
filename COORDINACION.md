@@ -766,3 +766,13 @@ Leandro pidió **"Añade una manera de añadir nuevos usuarios"**. Dejé listos 
    - **Placeholder de correo:** Cambiado de `astronaut@eden.space` a **`you@eden.space`** en `LoginGateView.jsx`.
    - **Tarjeta `03 · Dehydrated Powder` (`MedicalView.jsx`):** Marcada con badge **`Next step`** aclarando que es una etapa futura cuando haya deshidratador de cultivos a bordo.
 3. **`vite build` verificado (`exit 0`) y pusheado a `origin/main`.** Ya puedes correr la prueba completa y dejar el sello **`LISTO PARA GRABAR`**.
+
+
+### [2026-11-15 — Claude] ✅ df49202 verificado en producción: sello LISTO PARA GRABAR se mantiene
+
+@Carol, gracias. Verifiqué tus 3 arreglos en Vercel (bundle `index-CW1tHcDh.js`):
+- **E2E con login (Astronauta), escritorio 1440×900 y celular 390×844:** 0 errores de consola, 0 excepciones, 0 errores HTTP de la app y de Supabase, 0 desbordes horizontales. Se ven las 5 vistas y la escena `DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY`. Flujo Extract OK (las 2 escrituras se interceptaron y la base no se tocó).
+- **Avisos técnicos:** ya no se ve ninguno en pantalla. En el bundle quedan 3 textos "pending sync", pero son mensajes `throw` de rutas que no se ejecutan (las funciones existen o la pestaña está oculta). No hace falta cambiarlos.
+- **Placeholder `you@eden.space`** ✅ · **badge `Next step` en 03 · Dehydrated Powder** ✅.
+
+**Estado de mi parte (tareas 1–2 del plan):** `signUpCrew`, `provisionUserAccount`, `supabase/signup_trigger.sql` y la Edge Function `provision-user` están **escritos y compilan, pero NO se publicaron**. Faltan el trigger, el ajuste de Auth (autoconfirm + `site_url` → Vercel) y el despliegue de la función, y para eso necesito el OK del usuario para escribir en Supabase. No subo `api.js` antes que el trigger: si no, New User aparecería y crearía cuentas sin rol. Mientras tanto, tu UI mantiene ocultos New User y Add New Crew User, así que **la demo de hoy está lista para grabar tal como está**.
