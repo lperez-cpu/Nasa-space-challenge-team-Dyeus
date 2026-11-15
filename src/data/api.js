@@ -102,13 +102,42 @@ export const alertsFromLog = (log) => {
 
 const alertTitle = (a) => `${a.label} · ${a.level}`;
 
+// ── Datos de misión calculados (no fijos) ──
+// Retraso de la señal = distancia / velocidad de la luz (máximo real Tierra–Marte ≈ 22 min por tramo).
+const LIGHT_KM_S = 299792.458;
+const earthDelayFrom = (distance) => {
+  const m = /([\d.]+)\s*M\s*KM/i.exec(distance ?? "");
+  if (!m) return undefined;
+  const s = Math.round((Number(m[1]) * 1e6) / LIGHT_KM_S);
+  return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
+};
+const missionFor = (day) => ({
+  ...mockMission,
+  earthDelay: earthDelayFrom(mockMission.distanceFromEarth) ?? mockMission.earthDelay,
+  missionDay: day != null ? `DAY ${day}` : String(mockMission.missionDay).replace(/^SOL\b/i, "DAY"),
+});
+
+// Dosis de radiación acumulada = días en el espacio × tasa de crucero (MSL/RAD), contra el
+// límite de carrera de la NASA (600 mSv).
+const radiationFor = (day) => {
+  const rate = mockSolution.radiation?.rateMsvPerDay ?? 1.84;
+  if (day == null || !mockVitals.radiationDose) return mockVitals.radiationDose;
+  const total = day * rate;
+  return {
+    ...mockVitals.radiationDose,
+    value: `${total.toFixed(1)} mSv`,
+    referenceRange: "Career limit 600 mSv",
+    status: total >= 600 ? "HIGH" : total >= 300 ? "ELEVATED" : "NOMINAL",
+  };
+};
+
 // Forma que usan BiometricsPanel / MedicalView (igual que vitalSigns.cortisol).
 const buildBiometrics = (log, alerts) => {
-  if (!log) return { mission: mockMission, alerts: null, vitals: mockVitals };
+  if (!log) return { mission: missionFor(null), alerts: null, vitals: mockVitals };
   const day = log.days_in_space;
   const hr = log.heart_rate;
   return {
-    mission: { ...mockMission, missionDay: day != null ? `DAY ${day}` : mockMission.missionDay },
+    mission: missionFor(day),
     alerts: alerts.map((a) => ({
       id: `log-${a.field}`,
       alertTitle: alertTitle(a),
@@ -117,9 +146,10 @@ const buildBiometrics = (log, alerts) => {
       referenceRange: "LOW",
       status: a.level === "HIGH" ? "HIGH" : "ELEVATED",
     })),
-    vitals: hr == null ? mockVitals : {
+    vitals: {
       ...mockVitals,
-      heartRate: {
+      radiationDose: radiationFor(day),
+      heartRate: hr == null ? mockVitals.heartRate : {
         ...mockVitals.heartRate,
         value: `${hr} BPM`,
         referenceRange: "60 – 100 BPM",
@@ -198,7 +228,7 @@ const optional = (path) => rest(path).catch(() => []);
 
 const MOCK_RESULT = {
   data: mockSolution,
-  biometrics: { mission: mockMission, alerts: null, vitals: mockVitals },
+  biometrics: { mission: missionFor(null), alerts: null, vitals: mockVitals },
   source: "mock",
 };
 
