@@ -10,7 +10,7 @@
 // Si faltan las variables de entorno o Supabase falla → mockData (la demo nunca se rompe).
 // La dashboard vuelve a consultar cada REFRESH_MS: si el backend agrega un registro, se ve solo.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { missionData as mockMission, solutionData as mockSolution, vitalSigns as mockVitals } from "./mockData";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
@@ -470,10 +470,18 @@ export function useSolutionData() {
   const [state, setState] = useState({ ...MOCK_RESULT, loading: supabaseEnabled });
   const [tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+  const lastKey = useRef("");
 
   useEffect(() => {
     let alive = true;
-    getSolutionData().then((r) => alive && setState({ ...r, loading: false }));
+    getSolutionData().then((r) => {
+      if (!alive) return;
+      // Solo se actualiza (y la app se redibuja) si los datos cambiaron de verdad.
+      const key = JSON.stringify({ ...r, data: { ...r.data, updatedAt: undefined } });
+      if (key === lastKey.current) return;
+      lastKey.current = key;
+      setState({ ...r, loading: false });
+    });
     return () => { alive = false; };
   }, [tick]);
 

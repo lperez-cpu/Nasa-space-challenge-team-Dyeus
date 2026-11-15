@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ShieldCheck, UserPlus, X } from 'lucide-react';
 
 const BLOOD_TYPES = ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
@@ -35,17 +35,25 @@ export default function NewProfileModal({ isOpen, onClose, onCreate, existingIds
   const [form, setForm] = useState(INITIAL_FORM);
   const [error, setError] = useState('');
 
+  // El formulario se limpia SOLO al abrir el modal. Antes dependía también de `onClose`, que App
+  // recrea en cada render (la app se refresca cada 15 s): eso borraba lo que el usuario escribía.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!isOpen) return;
     setForm(INITIAL_FORM);
     setError('');
+  }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
