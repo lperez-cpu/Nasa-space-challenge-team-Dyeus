@@ -203,6 +203,18 @@ const habitatFor = (r) => {
   return { habitat: key === "aph" ? "APH" : "Veggie", habitatLabel: `Grown in ${DATA_SOURCES[key].name}`, habitatUrl: DATA_SOURCES[key].url };
 };
 
+// Forma de consumo según la dosis de `plants` (o la columna consumption_method si existe).
+// Secar o extraer no se puede hoy en la ISS: se marca como siguiente paso, sin ocultarlo.
+const consumptionFrom = (dose = "") => {
+  const d = norm(dose);
+  if (/infus|tea|\bte\b/.test(d)) return "Infusion (Space Tea)";
+  if (/fresc|fresh|hoja|leaf|leaves|diente|clove|porcion|serving/.test(d)) return "Direct consumption (fresh)";
+  if (/visual|exposure|exposicion/.test(d)) return "Horticultural therapy (tending the plant)";
+  if (/extract/.test(d)) return "Extract · not available on the ISS";
+  if (/polvo|powder|seca|seco|dried|dry/.test(d)) return "Dried powder · needs a drying step (next step)";
+  return undefined;
+};
+
 const mapPlant = (r, trigger, triggerValue) => clean({
   ...habitatFor(r),
   id: `plant-${r.id}`,
@@ -215,6 +227,7 @@ const mapPlant = (r, trigger, triggerValue) => clean({
   effect: r.effect,
   compound: r.active_compound,
   dose: r.dose,
+  consumptionMethod: r.consumption_method ?? consumptionFrom(r.dose),
   harvestDays: r.grow_time_days,
   nasaBacked: Boolean(r.nasa_backed),
   evidence: r.evidence,
@@ -253,12 +266,41 @@ const mapCartridge = (r) => ({
   rxTag: r.rx_tag ?? undefined,
 });
 
-const demoVaultFor = (plant) =>
-  !plant ? mockSolution.seedVault : mockSolution.seedVault.map((c) => ({
-    ...c,
-    plant,
-    rxTag: c.rxTag ? `RX: ${plant.toUpperCase()} GEN-2` : c.rxTag,
-  }));
+// ── Seed Pods reales (`seed_cartridges`: pod_id, plant_id, slot, status, prescribed_for) ──
+const podPrefix = (plant = "") => norm(plant).replace(/[^a-z]/g, "").slice(0, 3).toUpperCase() || "POD";
+const mapPod = (r, plants) => ({
+  podId: r.pod_id,
+  plantId: r.plant_id,
+  plant: plants.find((p) => p.id === r.plant_id)?.plant_name,
+  slot: r.slot,
+  status: r.status, // ready | growing | planted | empty | harvested
+  prescribedFor: r.prescribed_for ?? null,
+});
+
+/** Auditoría del cartucho de la receta activa. El pod autorizado es uno REAL de la bóveda
+ *  (status "ready" primero); la viabilidad y la dosis de radiación siguen siendo de demo
+ *  (viabilitySimulated) porque la tabla no guarda esa medición. */
+const vaultFor = (plant, pods) => {
+  if (!plant) return mockSolution.seedVault;
+  const [gen3, gen2] = mockSolution.seedVault;
+  const mine = pods.filter((p) => p.podId && norm(p.plant) === norm(plant) && p.status !== "harvested");
+  const real = mine.find((p) => p.status === "ready") ?? mine.find((p) => p.status === "empty") ?? mine[0];
+  const prefix = podPrefix(plant);
+  const gen2Id = real?.podId ?? `${prefix}-Gen2-001`;
+  return [
+    { ...gen3, id: `${prefix}-Gen3-001`, cartridge: `Seed Pod ${prefix}-Gen3-001`, plant, podSimulated: true, viabilitySimulated: true },
+    {
+      ...gen2,
+      id: gen2Id,
+      cartridge: `Seed Pod ${gen2Id}`,
+      plant,
+      podStatus: real?.status,
+      podSimulated: !real,
+      viabilitySimulated: true,
+      rxTag: `RX: ${plant.toUpperCase()} · ${gen2Id.toUpperCase()}`,
+    },
+  ];
+};
 
 const optional = (path) => rest(path).catch(() => []);
 
@@ -289,7 +331,8 @@ export async function getSolutionData() {
     // Sin auditoría real en la base, los cartuchos de demo siguen a la primera receta activa
     // para que la dashboard no dispense una planta que nadie recetó.
     const auditRows = carts.filter(isAuditRow);
-    const seedVault = auditRows.length ? auditRows.map(mapCartridge) : demoVaultFor(prescriptions[0]?.plant);
+    const seedPods = carts.filter((r) => r.pod_id).map((r) => mapPod(r, plants));
+    const seedVault = auditRows.length ? auditRows.map(mapCartridge) : vaultFor(prescriptions[0]?.plant, seedPods);
     return {
       source: "supabase",
       biometrics: buildBiometrics(log, alerts),
@@ -298,6 +341,7 @@ export async function getSolutionData() {
         crew: log?.days_in_space != null ? { ...mockSolution.crew, missionDay: log.days_in_space } : mockSolution.crew,
         prescriptions,
         seedVault,
+        seedPods, // inventario real de la bóveda (todos los pods)
         // Historial de dispensados (para Plant Status). dispense_log no guarda el cartucho:
         // se asocia al cartucho autorizado de esa planta.
         dispenseHistory: dispenses.map((d) => {
