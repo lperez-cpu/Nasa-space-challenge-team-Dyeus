@@ -140,6 +140,7 @@ export default function App() {
           <BiometricsPanel
             profile={activeProfile}
             mission={biometrics.mission}
+            vitals={biometrics.vitals}
             alerts={biometrics.alerts}
             onRescan={refresh}
           />
