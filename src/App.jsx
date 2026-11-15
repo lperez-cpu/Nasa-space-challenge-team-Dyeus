@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { KeyRound, Menu } from 'lucide-react';
-import AuthModal from './components/auth/AuthModal';
+import { LogOut, Menu } from 'lucide-react';
+import LoginGateView from './components/auth/LoginGateView';
 import NewProfileModal from './components/NewProfileModal';
 import ProfileSwitcherModal from './components/ProfileSwitcherModal';
 import SidebarNav, { getNavWindows } from './components/SidebarNav';
@@ -29,7 +29,7 @@ function loadStoredProfiles() {
 }
 
 function AppContent() {
-  const { activeRole, isAuthenticated } = useAuth();
+  const { activeRole, displayName, signOut } = useAuth();
   const { data: solutionData, biometrics, source, loading, refresh } = useSolutionData();
   const [profiles, setProfiles] = useState(loadStoredProfiles);
   const [activeProfileId, setActiveProfileId] = useState(
@@ -37,7 +37,6 @@ function AppContent() {
   );
 
   const [activeView, setActiveView] = useState('astronaut');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [localDispensed, setLocalDispensed] = useState([]);
   const [extractedPodIds, setExtractedPodIds] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -205,22 +204,18 @@ function AppContent() {
                     : 'TELEMETRY: DEMO'}
               </span>
 
+              <span className="hidden rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-900 md:inline-flex">
+                {displayName} · {activeRoleMeta.badge}
+              </span>
+
               <button
                 type="button"
-                onClick={() => setIsAuthModalOpen(true)}
-                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-[#E14D2A] ${
-                  isAuthenticated
-                    ? 'border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
-                    : 'border-slate-300 bg-white text-[#0F172A] hover:border-[#E14D2A]'
-                }`}
+                onClick={signOut}
+                aria-label="Sign out"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 font-semibold text-[#0F172A] transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-[#E14D2A]"
               >
-                <KeyRound className="h-3.5 w-3.5 text-[#E14D2A]" />
-                <span className="hidden sm:inline">
-                  {isAuthenticated ? activeRoleMeta.badge : 'Sign In / Switch Profile'}
-                </span>
-                <span className="sm:hidden">
-                  {isAuthenticated ? activeRoleMeta.badge : 'Sign In'}
-                </span>
+                <LogOut className="h-3.5 w-3.5 text-[#E14D2A]" />
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
           </div>
@@ -320,19 +315,34 @@ function AppContent() {
         onCreate={handleCreateProfile}
         existingIds={profiles.map((p) => p.id)}
       />
-
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
     </div>
   );
+}
+
+function AuthGate() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="bg-telemetry-grid flex min-h-[100dvh] items-center justify-center bg-[#F4F6F9] px-4 text-[#0F172A]">
+        <p className="rounded-xl border border-slate-200 bg-white px-5 py-3 font-mono text-xs font-semibold text-slate-700 shadow-xs">
+          Verifying Mission Credentials...
+        </p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginGateView />;
+  }
+
+  return <AppContent />;
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <AuthGate />
     </AuthProvider>
   );
 }

@@ -16,7 +16,7 @@
   4. **MOD-04 · Seed Pod Vault** (`InventoryView.jsx`): Auditoría genética del Seed Vault con `RadialGauge` SVG y cálculo de radiación acumulada.
   5. **MOD-05 · Plant Status** (`PlantStatusView.jsx`): Progreso de cultivos activos en el bio-bay, estado vacío honesto y `Therapeutic Species for Active Cycle`.
 - **Navegación, Perfiles y Fuentes:** Sidebar vertical compacto (`SidebarNav.jsx`, colapsable `< 768px`) con `Switch Profile` visible sin recorte (`ProfileSwitcherModal.jsx` + `NewProfileModal.jsx`), favicon SVG inline y pie de página **Data sources** renderizando `DATA_SOURCES` de `src/data/api.js`.
-- **Arquitectura Proyectada — Acceso Dual & Roles (Carol Frontend + Claude Backend):** Entrada directa en **Modo Demo / Astronaut View** (sin muro de login bloqueante para jueces/video) + botón **`Sign In / Switch Profile`** en header (`AuthContext.jsx` + `AuthModal.jsx` con `Mission Credentials`, `Quick Demo Roles` y `Request Access`) para desbloquear vistas de `Doctor`, `Engineer` y `Admin` (`AccessRequestsView.jsx` / `UsersView.jsx`).
+- **Arquitectura Activa — Login Obligatorio & Roles por Credenciales (Basado en flujo de seguridad `dyeus_app`, 100% código propio en Swiss Orbital Light):** La app arranca en `LoginGateView.jsx` (`AuthGate` en `App.jsx`) bloqueando el acceso a datos biométricos, perfiles y módulos hasta iniciar sesión con Supabase Auth (`Sign In` + `Request Access`). Se eliminó `Quick Role Preview` sin contraseña para proteger la privacidad de cada perfil; tras autenticarse, muestra rol real en header + botón `Sign Out` + `MOD-06 · Access Control` según rol.
 - **Notas de Carol y Segundas Opiniones:** Cero lenguaje farmacéutico ("pastillas / capsule / Living Pharmacy") para blindar viabilidad técnica ante jueces NASA; honestidad total con `· simulated feed` y hardware Veggie/ISS existente. Se analizó en solo lectura `dyeus_app CODIGO APARTE NO MESCLAR` y se descartó copiar su `seed.sql` (destructivo) y su `App.jsx` monolítico.
 - **Integración API:** Consume `useSolutionData()`, `logDispense()`, `DATA_SOURCES` y `harvestDays` / `plantCatalog` de `src/data/api.js` (capa exclusiva de Claude, intacta). Próxima integración: funciones Auth/Profiles en `api.js`.
 
@@ -44,7 +44,7 @@
 | Paso 5 [Carol] | Resolución de los 7 hallazgos de `Claude-Tester` (`#3, #5, #6, #7, #9, #11, #12`) y enlace de `rx.consumptionMethod` (`a2f06bb`, `a9e93dc`) | Completado |
 | Paso 6 [Carol] | Selector multi-especie de `seedPods`, bloqueo de extracción ilimitada (sin `Reset`) y delineado verde/rojo de disponibilidad en `DispenserView.jsx` (`b61ab0a`, `71910cc`, `2447697`) | Completado |
 | Paso 7 [Carol] | Auditoría final + E2E en Vercel (`0` excepciones, `0` HTTP errors), conexión `harvestDays`/`plantCatalog` en `PlantStatusView.jsx` (`6ad578b`) | Completado |
-| Paso 8 [Carol] | Análisis solo-lectura de `dyeus_app` + diseño conjunto Acceso Dual (Perfiles & Login) + implementación Frontend (`AuthContext`, `AuthModal`, `AccessControlView`, `MOD-06`) | Completado (Frontend listo) |
+| Paso 8 [Carol] | Análisis solo-lectura de `dyeus_app` + implementación Frontend (`AuthContext`, `AccessControlView`, `MOD-06`) y migración a **Login Obligatorio (`LoginGateView.jsx` + `AuthGate`)** sin acceso anónimo a perfiles | Completado (Frontend listo) |
 
 ---
 

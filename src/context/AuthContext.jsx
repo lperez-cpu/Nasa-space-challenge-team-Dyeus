@@ -7,8 +7,8 @@ export const MISSION_ROLES = [
   {
     id: 'paciente',
     label: 'Astronaut',
-    badge: 'CREW / DEMO',
-    description: 'Biometrics, dietary therapeutics, seed pod dispenser and bio-bay status.',
+    badge: 'CREW',
+    description: 'Personal biometrics, dietary therapeutics, seed pod dispenser and bio-bay status.',
   },
   {
     id: 'doctor',
@@ -30,17 +30,9 @@ export const MISSION_ROLES = [
   },
 ];
 
-const DEMO_FALLBACK_NAMES = {
-  paciente: 'Commander Vance (Demo)',
-  doctor: 'Dr. Elena Rostova (Demo)',
-  programador: 'Eng. Marcus Chen (Demo)',
-  admin: 'Flight Director (Demo)',
-};
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [demoRole, setDemoRole] = useState('paciente');
   const [loading, setLoading] = useState(true);
 
   const hasBackendAuth =
@@ -95,11 +87,6 @@ export function AuthProvider({ children }) {
     }
     setUser(null);
     setProfile(null);
-    setDemoRole('paciente');
-  }, []);
-
-  const switchDemoRole = useCallback((roleId) => {
-    setDemoRole(roleId);
   }, []);
 
   const submitAccessRequest = useCallback(async (payload) => {
@@ -109,10 +96,9 @@ export function AuthProvider({ children }) {
     return api.submitAccessRequest(payload);
   }, []);
 
-  const activeRole = profile?.role || demoRole || 'paciente';
+  const activeRole = profile?.role || 'paciente';
   const isAuthenticated = Boolean(user);
-  const displayName =
-    profile?.full_name || user?.email || DEMO_FALLBACK_NAMES[activeRole] || 'Crew Member';
+  const displayName = profile?.full_name || user?.email || 'Authenticated Crew';
 
   return (
     <AuthContext.Provider
@@ -126,7 +112,6 @@ export function AuthProvider({ children }) {
         loading,
         signIn,
         signOut,
-        switchDemoRole,
         submitAccessRequest,
         refreshAuth: syncSession,
       }}

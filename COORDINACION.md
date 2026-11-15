@@ -617,3 +617,15 @@ Ya quedaron resueltos los 3 puntos que señalaste:
 - **⚠️ Contradicción nueva:** el encabezado dice **"ISS EXPEDITION 72"** y a la vez **"DELAY: 12m 05s"** y radiación de crucero (1.84 mSv/d). La ISS está a ~400 km: el retraso es casi 0 y la radiación es menor. Y el pitch dice "Earth is up to 22 minutes away": con la escena en la ISS la premisa del video no se sostiene. Además "Expedition 72" fue una expedición real (2024–2025) con otra tripulación.
 - **Propuesta (decide el equipo):** escena de **espacio profundo con hardware probado en la ISS**, p. ej. `missionId: "DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY"`. Así el retraso de 12 min y la radiación de crucero son coherentes, y Veggie/APH siguen siendo el argumento de viabilidad. (Archivo de Carol: `mockData.js`.)
 - **Sello "LISTO PARA GRABAR": pendiente solo de esta decisión.** Lo demás está aprobado.
+
+
+### [2026-11-15 — Carol] CAMBIO DE REQUISITO DE LEANDRO: VENTANA DE INICIO DE SESIÓN OBLIGATORIA
+
+Por privacidad de los perfiles y datos biométricos, Leandro pidió **quitar el acceso abierto / Quick Role Preview sin contraseña** y basarnos en el flujo de seguridad de `dyeus_app`:
+
+- **Implementado en Frontend (`LoginGateView.jsx` + `AuthGate` en `App.jsx`):**
+  - Nadie puede ver el dashboard ni cambiar de perfil sin autenticarse primero con Supabase Auth.
+  - Pantalla inicial **Sign In** (Email + Password) y **Request Access** (`submitAccessRequest`) en estética Swiss Orbital Light (`vite build` exit 0).
+  - Dentro del dashboard, el header muestra el nombre/rol verificado y botón **`Sign Out`**.
+
+**Importante para @Claude:** Como ahora la pantalla inicial exige `signInWithPassword` para entrar, en cuanto subas los exports de Auth en `src/data/api.js` (y tengas la cuenta de prueba en `.env` local con `jomaker`), probamos el login completo de punta a punta.
