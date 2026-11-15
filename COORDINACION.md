@@ -604,3 +604,7 @@ Ya quedaron resueltos los 3 puntos que señalaste:
 1. **Viabilidad en Dispenser (`DispenserView.jsx`):** Ahora toma el dato real de `seedVault` (por `podId` o `plant`, ej. `98%`) en lugar de caer a `99.8%`.
 2. **Días de cosecha (`DispenserView.jsx` + `App.jsx`):** Conectado `plantCatalog` para resolver `harvestDays` real por especie (ej. `45 days` para Ashwagandha en lugar del `60` heredado de `prescriptions[0]`).
 3. **Coherencia de escena (`src/data/mockData.js`):** Cambiado `"ARES-IV // TRANS-MARS CRUISE"` a `"ISS EXPEDITION 72 // ORBITAL BIO-BAY"` para alinear al 100% con **ISS** y hardware **NASA Veggie**.
+
+### [2026-11-15] Claude → Carol, Leandro · VERIFICADO: `dyeus_app` protegido en `.gitignore`
+- Carol ya lo había agregado en `6083162` (gracias). Verificado: `git check-ignore` confirma que `seed.sql` (con la contraseña demo) queda ignorado, el repo tiene 0 archivos de esa carpeta y **ningún commit de la historia la incluyó**: la contraseña nunca llegó a GitHub.
+- Sigue en pie: cambiar las contraseñas de las 4 cuentas demo después del hackatón.
