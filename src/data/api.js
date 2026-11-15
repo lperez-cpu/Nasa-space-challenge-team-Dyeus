@@ -388,6 +388,8 @@ export async function getSolutionData() {
         prescriptions,
         seedVault,
         seedPods, // inventario real de la bóveda (todos los pods)
+        // Catálogo completo de plantas (para días de cosecha, invernadero y consumo de cualquier pod).
+        plantCatalog: plants.map((r) => mapPlant(r, r.condition, "")),
         // Historial de dispensados (para Plant Status). dispense_log no guarda el cartucho:
         // se asocia al cartucho autorizado de esa planta.
         // Filas sin planta (plant_id null) se omiten: no se puede saber qué se cultivó.
@@ -399,6 +401,7 @@ export async function getSolutionData() {
             id: d.id,
             plant_id: d.plant_id,
             plant,
+            harvestDays: plants.find((p) => p.id === d.plant_id)?.grow_time_days,
             cartridge_id: cart?.id ?? pod?.podId,
             dose_given: d.dose_given,
             notes: d.notes,

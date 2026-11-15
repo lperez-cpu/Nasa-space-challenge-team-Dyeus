@@ -5,8 +5,8 @@
 //   node tests/e2e.mjs https://nasa-space-challenge-team-dyeus.vercel.app out/e2e
 //
 // - Recorre las 5 ventanas en escritorio (1440x900) y celular (390x844) y saca capturas.
-// - Prueba el flujo Dispensar. Los POST a dispense_log se INTERCEPTAN (respuesta 201 falsa):
-//   la base real no se toca. Con REAL_WRITES=1 se deja pasar la escritura.
+// - Prueba el flujo Dispensar. Las escrituras (POST/PATCH/DELETE) a dispense_log y seed_cartridges se
+//   INTERCEPTAN (respuesta 201 falsa): la base real no se toca y no se gastan pods. Con REAL_WRITES=1 se deja pasar la escritura.
 // - Registra errores de consola, excepciones y respuestas HTTP >= 400.
 // - Escribe report.json con el texto visible de cada pantalla y un resumen de fallas.
 // Variable BROWSER para otro navegador (por defecto Edge en Windows).
@@ -25,7 +25,7 @@ const VIEWS = [
   ["astronaut", "Astronaut Data"],
   ["medical", "Medical Consultation"],
   ["dispenser", "Dispenser"],
-  ["inventory", "Capsule Inventory"],
+  ["inventory", "Seed Pod Vault"],
   ["plants", "Plant Status"],
 ];
 const VIEWPORTS = { desktop: [1440, 900, false], mobile: [390, 844, true] };
@@ -59,7 +59,7 @@ ws.onmessage = (m) => {
     issues.http.push(`${p.response.status} ${p.response.url.slice(0, 160)}`);
   if (msg.method === "Fetch.requestPaused") {
     const rq = p.request;
-    if (rq.method !== "POST" || REAL_WRITES) { send("Fetch.continueRequest", { requestId: p.requestId }); return; }
+    if (!["POST", "PATCH", "DELETE"].includes(rq.method) || REAL_WRITES) { send("Fetch.continueRequest", { requestId: p.requestId }); return; }
     issues.intercepted.push(`${rq.method} ${rq.url.replace(/^https:\/\/[^/]+/, "")} ${rq.postData ?? ""}`);
     send("Fetch.fulfillRequest", { requestId: p.requestId, responseCode: 201,
       responseHeaders: [{ name: "Access-Control-Allow-Origin", value: "*" }], body: "" });
@@ -85,7 +85,10 @@ const overflowX = () => evalJs("document.documentElement.scrollWidth > window.in
 await send("Runtime.enable");
 await send("Page.enable");
 await send("Network.enable");
-await send("Fetch.enable", { patterns: [{ urlPattern: "*dispense_log*", requestStage: "Request" }] });
+await send("Fetch.enable", { patterns: [
+  { urlPattern: "*dispense_log*", requestStage: "Request" },
+  { urlPattern: "*seed_cartridges*", requestStage: "Request" }, // PATCH del pod a "growing"
+] });
 
 const report = { url: URL, when: new Date().toISOString(), realWrites: REAL_WRITES, viewports: {} };
 for (const [vp, [w, h, mobile]] of Object.entries(VIEWPORTS)) {
