@@ -438,8 +438,26 @@ export async function logDispense(cartridge) {
       }),
       prefer: "return=minimal",
     });
+    await markPodGrowing(cartridge.podId ?? cartridge.id);
   } catch (err) {
     console.warn("[E.D.E.N.] No se pudo registrar el dispensado:", err);
+  }
+}
+
+/** Marca el Seed Pod como "growing" en `seed_cartridges` para que siga bloqueado tras recargar.
+ *  Necesita una política RLS de UPDATE para anon (ver supabase/pod_status_update.sql);
+ *  sin ella PostgREST no actualiza ninguna fila y solo se avisa en consola. */
+async function markPodGrowing(podId) {
+  if (!podId || !/^[A-Z]{2,4}-Gen\d+-\d+$/i.test(String(podId))) return; // solo pods reales (no los de demo)
+  try {
+    const rows = await rest(`seed_cartridges?pod_id=eq.${encodeURIComponent(podId)}&status=eq.ready`, {
+      method: "PATCH",
+      body: { status: "growing", planted_at: new Date().toISOString() },
+      prefer: "return=representation",
+    });
+    if (!rows?.length) console.warn(`[E.D.E.N.] El pod ${podId} no se actualizó (¿falta la política de UPDATE o no estaba "ready"?)`);
+  } catch (err) {
+    console.warn(`[E.D.E.N.] No se pudo marcar el pod ${podId} como growing:`, err);
   }
 }
 
