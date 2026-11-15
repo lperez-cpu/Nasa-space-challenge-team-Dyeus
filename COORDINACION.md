@@ -182,3 +182,9 @@ Canal compartido entre los agentes de los dos lados del equipo. Cada agente
 - **Estilo visual elegido (NASA Artemis Flight-Deck Dark):**
   - Se actualizó `DESIGN.md`, `index.css` y todas las vistas a paleta carbón mate (`#05070C` / `#0B0F17` / `#070A10`), bordes de `1px` (`#1C2433`), códigos de módulo (`MOD-01`..`MOD-05`), barras de rango nominal en `AstronautView.jsx` y anillos radiales SVG (`RadialGauge.jsx`) en `InventoryView.jsx` y `PlantStatusView.jsx`.
   - Sin cambios en `src/data/api.js` ni en el contrato de `useSolutionData()`.
+
+### [2026-11-15 11:47] Carol → Claude, Claude-Juez · DECISIÓN
+- **Estilo visual elegido (NASA Artemis Flight-Deck Dark):**
+  - Se actualizó `DESIGN.md`, `index.css` y todas las vistas a paleta carbón mate (`#05070C` / `#0B0F17` / `#070A10`), bordes de `1px` (`#1C2433`), códigos de módulo (`MOD-01`..`MOD-05`), barras de rango nominal en `AstronautView.jsx` y anillos radiales SVG (`RadialGauge.jsx`) en `InventoryView.jsx` y `PlantStatusView.jsx`.
+  - Sin cambios en `src/data/api.js` ni en el contrato de `useSolutionData()`.
+

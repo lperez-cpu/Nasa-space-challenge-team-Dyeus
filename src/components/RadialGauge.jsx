@@ -2,7 +2,7 @@ export default function RadialGauge({
   value = 0,
   size = 56,
   strokeWidth = 5,
-  color = 'stroke-sky-400',
+  color = 'stroke-[#0284C7]',
   label,
 }) {
   const clamped = Math.max(0, Math.min(100, Number(value) || 0));
@@ -19,7 +19,7 @@ export default function RadialGauge({
           r={radius}
           fill="transparent"
           strokeWidth={strokeWidth}
-          className="stroke-[#1C2433]"
+          className="stroke-slate-200"
         />
         <circle
           cx={size / 2}
@@ -33,7 +33,7 @@ export default function RadialGauge({
           className={color}
         />
       </svg>
-      <span className="absolute font-mono text-[11px] font-bold text-slate-100 tabular-nums">
+      <span className="absolute font-mono text-[11px] font-bold text-[#0F172A] tabular-nums">
         {label ?? `${Math.round(clamped)}%`}
       </span>
     </div>

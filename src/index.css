@@ -1,12 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: #05070C;
-  --color-surface: #0B0F17;
-  --color-surface-elevated: #111824;
-  --color-border-subtle: #1C2433;
-  --color-orbital: #38BDF8;
-  --color-orbital-contrast: #04101A;
+  --color-canvas: #F4F6F9;
+  --color-surface: #FFFFFF;
+  --color-surface-inset: #F8FAFC;
+  --color-border-subtle: #E2E8F0;
+  --color-nasa-orange: #E14D2A;
 }
 
 @layer base {
@@ -17,7 +16,7 @@
   }
 
   :root {
-    color-scheme: dark;
+    color-scheme: light;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
@@ -27,8 +26,8 @@
     padding: 0;
     min-height: 100dvh;
     overflow-x: clip;
-    background-color: #05070C;
-    color: #f1f5f9;
+    background-color: #F4F6F9;
+    color: #0F172A;
   }
 
   .font-mono {
@@ -58,7 +57,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.72;
+    opacity: 0.78;
   }
 }
 
@@ -70,10 +69,10 @@
   animation: alert-beacon 1.6s ease-in-out infinite;
 }
 
-/* Precision flight-deck hairline grid */
+/* Swiss architectural drafting grid */
 .bg-telemetry-grid {
   background-image:
-    linear-gradient(to right, rgba(148, 163, 184, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
   background-size: 32px 32px;
 }

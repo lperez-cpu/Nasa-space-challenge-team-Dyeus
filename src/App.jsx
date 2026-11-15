@@ -117,7 +117,7 @@ export default function App() {
   const alertsCount = Array.isArray(biometrics.alerts) ? biometrics.alerts.length : 0;
 
   return (
-    <div className="bg-telemetry-grid flex min-h-[100dvh] bg-[#05070C] text-slate-100">
+    <div className="bg-telemetry-grid flex min-h-[100dvh] bg-[#F4F6F9] text-[#0F172A]">
       {/* Left Vertical Sidebar */}
       <SidebarNav
         activeView={activeView}
@@ -131,49 +131,49 @@ export default function App() {
 
       {/* Active Window Workspace */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#1C2433] bg-[#05070C]/92 backdrop-blur-md">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3.5 sm:px-8">
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(true)}
                 aria-label="Open side menu"
-                className="cursor-pointer rounded-md border border-[#1C2433] bg-[#0B0F17] p-2 text-slate-200 transition-colors hover:border-sky-400/50 focus-visible:outline-2 focus-visible:outline-sky-400 md:hidden"
+                className="cursor-pointer rounded-md border border-slate-200 bg-white p-2 text-slate-700 transition-colors hover:border-[#E14D2A] focus-visible:outline-2 focus-visible:outline-[#E14D2A] md:hidden"
               >
                 <Menu className="h-4 w-4" />
               </button>
 
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded border border-[#1C2433] bg-[#0B0F17] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-sky-300">
+                  <span className="rounded bg-[#0F172A] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-white">
                     {currentWindowMeta.code}
                   </span>
-                  <h1 className="text-base font-bold tracking-tight text-slate-100 sm:text-lg">
+                  <h1 className="text-base font-bold tracking-tight text-[#0F172A] sm:text-lg">
                     {currentWindowMeta.label}
                   </h1>
                 </div>
-                <p className="mt-0.5 text-xs text-slate-400">{currentWindowMeta.description}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{currentWindowMeta.description}</p>
               </div>
             </div>
 
             <div className="hidden items-center gap-2 font-mono text-[11px] sm:flex">
-              <span className="rounded-md border border-[#1C2433] bg-[#0B0F17] px-2.5 py-1 text-slate-300 tabular-nums">
+              <span className="rounded-md border border-slate-200 bg-[#F8FAFC] px-2.5 py-1 font-medium text-slate-700 tabular-nums">
                 DELAY: {biometrics.mission?.earthDelay || '12m 05s'}
               </span>
               <span
                 className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-semibold ${
                   source === 'supabase'
-                    ? 'border-emerald-500/35 bg-emerald-950/30 text-emerald-300'
-                    : 'border-sky-400/30 bg-sky-950/30 text-sky-300'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border-sky-200 bg-sky-50 text-sky-800'
                 }`}
               >
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
                     loading
-                      ? 'animate-pulse bg-amber-400'
+                      ? 'animate-pulse bg-amber-500'
                       : source === 'supabase'
-                        ? 'bg-emerald-400'
-                        : 'bg-sky-400'
+                        ? 'bg-emerald-600'
+                        : 'bg-sky-600'
                   }`}
                 />
                 {loading
@@ -186,7 +186,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-8 sm:py-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-8">
           {activeView === 'astronaut' && (
             <AstronautView
               profile={activeProfile}

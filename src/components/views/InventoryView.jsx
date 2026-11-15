@@ -13,29 +13,29 @@ export default function InventoryView({ seedVault = [], radiation }) {
   return (
     <section
       aria-label="Capsule Inventory and Genetic Audit"
-      className="flex flex-col gap-6 rounded-lg border border-[#1C2433] bg-[#0B0F17] p-6"
+      className="flex flex-col gap-6 rounded-lg border border-slate-200 bg-white p-6 shadow-xs"
     >
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1C2433] pb-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md border border-sky-400/35 bg-sky-400/10 text-sky-300">
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#E14D2A]/10 text-[#E14D2A]">
             <Pill className="h-4 w-4" />
           </span>
           <div>
-            <p className="font-mono text-[11px] font-semibold tracking-[0.18em] text-sky-300 uppercase">
+            <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-[#E14D2A] uppercase">
               Genetic Seed Vault Audit
             </p>
-            <h2 className="text-lg font-bold text-slate-100">
+            <h2 className="text-lg font-bold text-[#0F172A]">
               Capsule Inventory & Genetic Filter
             </h2>
           </div>
         </div>
 
         {radiation && (
-          <div className="flex items-center gap-2 rounded-md border border-[#1C2433] bg-[#070A10] px-3 py-1.5 font-mono text-xs text-slate-300">
-            <Radiation className="h-3.5 w-3.5 text-amber-400" />
+          <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-[#F8FAFC] px-3 py-1.5 font-mono text-xs font-medium text-slate-700">
+            <Radiation className="h-3.5 w-3.5 text-amber-600" />
             <span>
-              CRUISE RATE: <strong className="text-slate-100 tabular-nums">{radiation.rateMsvPerDay} mSv/d</strong>
+              CRUISE RATE: <strong className="text-[#0F172A] tabular-nums">{radiation.rateMsvPerDay} mSv/d</strong>
             </span>
           </div>
         )}
@@ -43,21 +43,21 @@ export default function InventoryView({ seedVault = [], radiation }) {
 
       {/* Summary Counters */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-        <div className="rounded-lg border border-[#1C2433] bg-[#070A10] p-4">
-          <p className="font-mono text-[11px] text-slate-500 uppercase">Total in Vault</p>
-          <p className="mt-1 font-mono text-2xl font-bold text-slate-100 tabular-nums">
+        <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-4">
+          <p className="font-mono text-[11px] font-semibold text-slate-500 uppercase">Total in Vault</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-[#0F172A] tabular-nums">
             {seedVault.length}
           </p>
         </div>
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-4">
-          <p className="font-mono text-[11px] text-emerald-300/80 uppercase">DNA Authorized</p>
-          <p className="mt-1 font-mono text-2xl font-bold text-emerald-300 tabular-nums">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <p className="font-mono text-[11px] font-semibold text-emerald-800 uppercase">DNA Authorized</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-emerald-700 tabular-nums">
             {approvedCount}
           </p>
         </div>
-        <div className="rounded-lg border border-red-500/30 bg-red-950/20 p-4">
-          <p className="font-mono text-[11px] text-red-300/80 uppercase">Discarded</p>
-          <p className="mt-1 font-mono text-2xl font-bold text-red-300 tabular-nums">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="font-mono text-[11px] font-semibold text-red-800 uppercase">Discarded</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-red-700 tabular-nums">
             {rejectedCount}
           </p>
         </div>
@@ -74,20 +74,20 @@ export default function InventoryView({ seedVault = [], radiation }) {
               key={c.id}
               className={`flex flex-col justify-between gap-4 rounded-lg border p-5 ${
                 ok
-                  ? 'border-emerald-500/35 bg-[#070A10]'
-                  : 'border-red-500/35 bg-[#070A10]'
+                  ? 'border-emerald-200 bg-[#F8FAFC]'
+                  : 'border-red-200 bg-red-50/40'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-bold text-slate-100">{c.cartridge}</h3>
-                    <p className="text-xs text-slate-400">{c.plant}</p>
+                    <h3 className="text-base font-bold text-[#0F172A]">{c.cartridge}</h3>
+                    <p className="text-xs font-medium text-slate-500">{c.plant}</p>
                     <span
                       className={`mt-2 inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${
                         ok
-                          ? 'border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
-                          : 'border-red-500/40 bg-red-950/40 text-red-300'
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                          : 'border-red-300 bg-red-50 text-red-800'
                       }`}
                     >
                       {ok ? (
@@ -104,27 +104,27 @@ export default function InventoryView({ seedVault = [], radiation }) {
                       value={c.viability}
                       size={60}
                       strokeWidth={5}
-                      color={ok ? 'stroke-emerald-400' : 'stroke-red-500'}
+                      color={ok ? 'stroke-emerald-600' : 'stroke-red-600'}
                     />
-                    <span className="font-mono text-[9px] tracking-wider text-slate-500 uppercase">
+                    <span className="font-mono text-[9px] font-semibold tracking-wider text-slate-500 uppercase">
                       VIABILITY
                     </span>
                   </div>
                 </div>
 
-                <p className="mt-4 font-mono text-xs font-semibold text-slate-200">
+                <p className="mt-4 font-mono text-xs font-bold text-[#0F172A]">
                   {c.label}
                 </p>
-                <p className="mt-1 text-xs text-slate-400">{c.detail}</p>
+                <p className="mt-1 text-xs text-slate-600">{c.detail}</p>
               </div>
 
-              <div className="flex flex-col gap-2 border-t border-[#1C2433] pt-3.5">
+              <div className="flex flex-col gap-2 border-t border-slate-200 pt-3.5">
                 {dose != null && (
                   <div className="flex items-baseline justify-between gap-2 font-mono text-xs">
                     <span className="text-slate-500">CUMULATIVE DOSE</span>
                     <span
                       className={`font-bold tabular-nums ${
-                        ok ? 'text-slate-200' : 'text-red-300'
+                        ok ? 'text-[#0F172A]' : 'text-red-700'
                       }`}
                     >
                       {dose} mSv
@@ -140,7 +140,7 @@ export default function InventoryView({ seedVault = [], radiation }) {
                 )}
 
                 {ok && c.rxTag && (
-                  <div className="mt-1 rounded border border-emerald-500/30 bg-emerald-950/30 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-emerald-200">
+                  <div className="mt-1 rounded border border-emerald-300 bg-white px-2.5 py-1.5 font-mono text-[11px] font-bold text-emerald-800">
                     {c.rxTag}
                   </div>
                 )}
