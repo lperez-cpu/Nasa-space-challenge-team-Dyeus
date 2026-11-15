@@ -9,9 +9,12 @@
 //   INTERCEPTAN (respuesta 201 falsa): la base real no se toca y no se gastan pods. Con REAL_WRITES=1 se deja pasar la escritura.
 // - Registra errores de consola, excepciones y respuestas HTTP >= 400.
 // - Escribe report.json con el texto visible de cada pantalla y un resumen de fallas.
+// - LOGIN: la app exige sesión. La prueba entra con la cuenta de Astronauta leída del archivo
+//   LOCAL CUENTAS_DEMO.local.txt (ignorado por git; nunca credenciales en el repo). Otra ruta:
+//   variable CREDENTIALS_FILE. Sin archivo, la prueba se detiene en la pantalla de login.
 // Variable BROWSER para otro navegador (por defecto Edge en Windows).
 import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const URL = process.argv[2] ?? "http://localhost:5173/";
@@ -20,6 +23,16 @@ const BROWSER = process.env.BROWSER ?? "C:/Program Files (x86)/Microsoft/Edge/Ap
 const REAL_WRITES = process.env.REAL_WRITES === "1";
 const PORT = 9300 + Math.floor(Math.random() * 500);
 mkdirSync(OUT, { recursive: true });
+
+// Cuenta de Astronauta desde el archivo local: línea "Astronauta  <correo>  <contraseña> …"
+function astronautCredentials() {
+  const file = resolve(process.env.CREDENTIALS_FILE ?? "CUENTAS_DEMO.local.txt");
+  if (!existsSync(file)) return null;
+  const line = readFileSync(file, "utf8").split(/\r?\n/).find((l) => /^\s*Astronauta\s+\S+@\S+\s+\S+/.test(l));
+  const m = line && /^\s*Astronauta\s+(\S+@\S+)\s+(\S+)/.exec(line);
+  return m ? { email: m[1], password: m[2] } : null;
+}
+const CREDS = astronautCredentials();
 
 const VIEWS = [
   ["astronaut", "Astronaut Data"],
@@ -88,13 +101,36 @@ await send("Network.enable");
 await send("Fetch.enable", { patterns: [
   { urlPattern: "*dispense_log*", requestStage: "Request" },
   { urlPattern: "*seed_cartridges*", requestStage: "Request" }, // PATCH del pod a "growing"
+  { urlPattern: "*profile_views*", requestStage: "Request" },
+  { urlPattern: "*access_requests*", requestStage: "Request" },
 ] });
 
-const report = { url: URL, when: new Date().toISOString(), realWrites: REAL_WRITES, viewports: {} };
+// Llena el formulario de LoginGateView (React controlado) y envía. Devuelve el estado del login.
+const login = async () => {
+  const hasForm = await evalJs("!!document.querySelector('input[type=password]')");
+  if (!hasForm) return "already-signed-in";
+  if (!CREDS) return "NO-CREDENTIALS-FILE";
+  await evalJs(`(() => {
+    const set = (sel, v) => { const el = document.querySelector(sel);
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v);
+      el.dispatchEvent(new Event('input', { bubbles: true })); };
+    set('input[type=email]', ${JSON.stringify(CREDS.email)});
+    set('input[type=password]', ${JSON.stringify(CREDS.password)});
+    document.querySelector('input[type=password]').closest('form').requestSubmit(); })()`);
+  for (let i = 0; i < 20; i++) {
+    await sleep(500);
+    if (!(await evalJs("!!document.querySelector('input[type=password]')"))) return "signed-in";
+  }
+  return "FAILED: " + ((await evalJs("document.body.innerText"))?.match(/Invalid[^\n]*|error[^\n]{0,80}/i)?.[0] ?? "login form still visible");
+};
+
+const report = { url: URL, when: new Date().toISOString(), realWrites: REAL_WRITES, viewports: {}, login: {} };
 for (const [vp, [w, h, mobile]] of Object.entries(VIEWPORTS)) {
   await send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile });
   await send("Page.navigate", { url: URL });
-  await sleep(7000);
+  await sleep(6000);
+  report.login[vp] = await login();
+  await sleep(3000);
   const views = {};
   for (const [id, label] of VIEWS) {
     let res = await click(label);
@@ -118,8 +154,21 @@ await shot("flow-plant-status");
 report.dispenseFlow.plantStatus = (await visibleText())?.slice(0, 1500);
 
 report.issues = issues;
+const SCENE = "DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY";
+// Solo cuentan los errores HTTP de la app y de Supabase; los de extensiones del navegador
+// (p. ej. mellowtel) se listan aparte. El aviso "no se actualizó" lo provoca la intercepción.
+const appHost = new globalThis.URL(URL).host;
+const isApp = (line) => line.includes(appHost) || line.includes(".supabase.co");
+const expectedWarning = (line) => !REAL_WRITES && /no se actualizó/.test(line);
+report.issues.httpExternal = issues.http.filter((l) => !isApp(l));
+report.issues.consoleExpected = issues.console.filter(expectedWarning);
 report.summary = {
-  consoleErrors: issues.console.length, exceptions: issues.exceptions.length, httpErrors: issues.http.length,
+  login: report.login,
+  sceneVisible: Object.fromEntries(Object.entries(report.viewports).map(([vp, v]) => [vp, (v.astronaut?.text ?? "").includes(SCENE)])),
+  consoleErrors: issues.console.filter((l) => !expectedWarning(l)).length,
+  exceptions: issues.exceptions.length,
+  httpErrors: issues.http.filter(isApp).length,
+  httpExternalIgnored: report.issues.httpExternal.length,
   postsIntercepted: issues.intercepted.length,
   viewsNotFound: Object.entries(report.viewports).flatMap(([vp, v]) => Object.entries(v).filter(([, x]) => x.click === "NOT FOUND").map(([k]) => `${vp}/${k}`)),
   horizontalOverflow: Object.entries(report.viewports).flatMap(([vp, v]) => Object.entries(v).filter(([, x]) => x.horizontalOverflow).map(([k]) => `${vp}/${k}`)),
