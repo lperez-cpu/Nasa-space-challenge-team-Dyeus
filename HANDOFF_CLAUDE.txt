@@ -1,0 +1,62 @@
+================================================================
+PROJECT E.D.E.N. — RESPUESTA DE CAROL A CLAUDE (Frontend -> Backend)
+Respuesta a Handoff_Carol.txt (actualizado) · 2026-11-15
+Branch activa: feature/ui-redesign
+================================================================
+
+1. ESTADO DE LA INTEGRACIÓN Y REBASE
+----------------------------------------------------------------
+- Rebase completado: La rama `feature/ui-redesign` se encuentra rebasada
+  sobre `origin/main` (commit base 919578a).
+- Sin divergencias: No hay conflictos con la rama principal.
+
+2. CAPA BACKEND (src/data/api.js)
+----------------------------------------------------------------
+- 100% Intacto: `src/data/api.js` se preservó directamente de `origin/main`
+  y NO fue editado, respetando la propiedad del lado de Claude.
+- Se respetan todas las correcciones de esquema (`created_at`, `plant_id`,
+  `prescription_plant`, manejo de HTTP 201 en rest()).
+
+3. ATENCIÓN A HALLAZGOS DE CLAUDE-JUEZ (COORDINACION.md)
+----------------------------------------------------------------
+Se revisaron los hallazgos dirigidos a Leandro/Carol:
+
+- Hallazgo 1 [Alto] (Delay de comunicación):
+  En `src/App.jsx:148`, el fallback de `earthDelay` se ajustó a "12m 40s"
+  (≤ 22 min, coherente con la distancia de crucero de 217.4M km).
+  Queda pendiente en el lado de Claude actualizar `mockData.js:68` (`missionData`).
+
+- Hallazgo 2 [Alto] (Días de cultivo en Plant Status):
+  En `src/components/views/PlantStatusView.jsx:30-36`, `elapsedDays` se calcula
+  a partir del timestamp real `dispensed_at` de cada registro acotado a `harvestDays`,
+  eliminando cualquier valor ficticio previo.
+
+- Hallazgo 3 [Alto] (Etiqueta de viabilidad NASA):
+  En `MedicalView.jsx:168` y `PlantStatusView.jsx:207-209`, todas las plantas con
+  `!rx.nasaBacked` muestran de manera destacada la etiqueta
+  "NOT FLIGHT-VALIDATED · CLINICAL EVIDENCE", cumpliendo la regla de rigor del hackatón.
+
+- Hallazgo 6 [Medio] (Flujo de cultivo y consumo):
+  En `DispenserView.jsx:129-134`, se explica en pantalla el ciclo operativo:
+  transferencia criogénica de la semilla a la bio-bandeja hidropónica -> cultivo
+  hasta cosecha ({harvestDays} días) -> rendimiento de la formulación médica
+  prescrita registrada en `dispense_log`.
+
+- Hallazgo 8 [Bajo] (Telemetría de bio-cámara simulada):
+  En `PlantStatusView.jsx:4-6`, las métricas de pH, temperatura y PAR están
+  rotuladas explícitamente con el badge "SIMULATED".
+
+4. CANAL DE COMUNICACIÓN CENTRALIZADO (COORDINACION.md)
+----------------------------------------------------------------
+- Entendido y aceptado: A partir de este momento, cualquier pedido, revisión,
+  decisión o bloqueo se registrará formalmente al final de `COORDINACION.md`
+  respetando las identidades asignadas (`Claude-Juez`, `Leo-Juez`, `Carol`, `Claude`)
+  y la separación estricta de propiedad de archivos.
+- `HANDOFF_CLAUDE.txt` y `Handoff_Carol.txt` quedan archivados como actas de traspaso
+  inicial de la integración.
+
+5. VERIFICACIÓN DE COMPILACIÓN (BUILD)
+----------------------------------------------------------------
+- `npm run build` compiló sin errores:
+  ✓ 1589 modules transformed.
+================================================================

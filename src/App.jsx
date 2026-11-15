@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Trash2, UserPlus, Users } from 'lucide-react';
-import BiometricsPanel from './components/BiometricsPanel';
+import { Menu } from 'lucide-react';
 import NewProfileModal from './components/NewProfileModal';
-import SolutionPanel from './components/SolutionPanel';
-import { useSolutionData, logDispense } from './data/api';
+import ProfileSwitcherModal from './components/ProfileSwitcherModal';
+import SidebarNav, { NAV_WINDOWS } from './components/SidebarNav';
+import AstronautView from './components/views/AstronautView';
+import DispenserView from './components/views/DispenserView';
+import InventoryView from './components/views/InventoryView';
+import MedicalView from './components/views/MedicalView';
+import PlantStatusView from './components/views/PlantStatusView';
+import { logDispense, useSolutionData } from './data/api';
 import { astronautProfile } from './data/mockData';
 
 const PROFILES_STORAGE_KEY = 'eden_crew_profiles';
@@ -21,11 +26,16 @@ function loadStoredProfiles() {
 }
 
 export default function App() {
-  const { data: solutionData, biometrics, refresh } = useSolutionData();
+  const { data: solutionData, biometrics, source, loading, refresh } = useSolutionData();
   const [profiles, setProfiles] = useState(loadStoredProfiles);
   const [activeProfileId, setActiveProfileId] = useState(
     () => localStorage.getItem(ACTIVE_PROFILE_STORAGE_KEY) || astronautProfile.id,
   );
+
+  const [activeView, setActiveView] = useState('astronaut');
+  const [localDispensed, setLocalDispensed] = useState([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
@@ -78,75 +88,147 @@ export default function App() {
     });
   };
 
-  return (
-    <div className="bg-telemetry-grid min-h-screen bg-[#05080F] text-slate-100">
-      {/* Top Mission Control Header */}
-      <header className="sticky top-0 z-30 border-b border-cyan-500/25 bg-[#070B14]/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
-          <div className="flex items-center gap-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
-            <h1 className="font-mono text-xs font-bold tracking-[0.14em] text-slate-100 sm:text-sm">
-              PROJECT E.D.E.N. | DEEP SPACE MODE — EARTH DELAY: 24m 12s (100% AUTONOMOUS)
-            </h1>
-          </div>
+  const handleDispensed = async (cartridge) => {
+    if (!cartridge) return;
+    setLocalDispensed((prev) => [
+      {
+        id: `local-${Date.now()}`,
+        cartridge_id: cartridge.id,
+        plant: cartridge.plant,
+        dispensed_at: new Date().toISOString(),
+        isLocal: true,
+      },
+      ...prev,
+    ]);
+    await logDispense(cartridge);
+    refresh();
+  };
 
-          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-cyan-300/90">
-            <div className="flex items-center gap-1.5 rounded border border-slate-700 bg-[#0B111E] px-2 py-1">
-              <Users className="h-3.5 w-3.5 text-cyan-400" />
-              <select
-                aria-label="Seleccionar perfil de astronauta"
-                value={activeProfile.id}
-                onChange={(e) => setActiveProfileId(e.target.value)}
-                className="cursor-pointer bg-transparent font-mono text-[11px] text-slate-100 focus:outline-none"
+  const currentWindowMeta =
+    NAV_WINDOWS.find((w) => w.id === activeView) || NAV_WINDOWS[0];
+  const alertsCount = Array.isArray(biometrics.alerts) ? biometrics.alerts.length : 0;
+
+  return (
+    <div className="bg-telemetry-grid flex min-h-[100dvh] bg-[#060911] text-slate-100">
+      {/* Left Vertical Sidebar */}
+      <SidebarNav
+        activeView={activeView}
+        onSelectView={setActiveView}
+        activeProfile={activeProfile}
+        alertsCount={alertsCount}
+        onOpenProfileSwitcher={() => setIsSwitcherOpen(true)}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* Active Window Workspace */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 border-b border-slate-800/90 bg-[#060911]/90 backdrop-blur-md">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Open side menu"
+                className="cursor-pointer rounded-lg border border-slate-800 bg-[#0C1320] p-2 text-slate-200 transition-colors hover:border-sky-400/50 focus-visible:outline-2 focus-visible:outline-sky-400 md:hidden"
               >
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#0B111E] text-slate-100">
-                    {p.name} ({p.id})
-                  </option>
-                ))}
-              </select>
-              {activeProfile.isCustom && profiles.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => handleDeleteProfile(activeProfile.id)}
-                  title="Eliminar perfil personalizado"
-                  aria-label={`Eliminar perfil ${activeProfile.name}`}
-                  className="ml-1 cursor-pointer rounded p-0.5 text-slate-400 transition-colors hover:text-red-400"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
+                <Menu className="h-4 w-4" />
+              </button>
+
+              <div>
+                <h1 className="text-base font-bold tracking-tight text-slate-100 sm:text-lg">
+                  {currentWindowMeta.label}
+                </h1>
+                <p className="text-xs text-slate-400">{currentWindowMeta.description}</p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsProfileModalOpen(true)}
-              className="flex cursor-pointer items-center gap-1.5 rounded border border-cyan-400/50 bg-cyan-500/15 px-2.5 py-1 font-mono text-[11px] font-semibold text-cyan-200 transition-colors hover:border-cyan-300 hover:bg-cyan-500/25 hover:text-white"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-              <span>Nuevo Perfil</span>
-            </button>
-
-            <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-1">
-              TELEMETRY: LIVE
-            </span>
+            <div className="hidden items-center gap-2.5 font-mono text-[11px] sm:flex">
+              <span className="rounded-md border border-slate-800 bg-[#0C1320] px-2.5 py-1 text-slate-300">
+                DELAY: {biometrics.mission?.earthDelay || '12m 05s'}
+              </span>
+              <span
+                className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-semibold ${
+                  source === 'supabase'
+                    ? 'border-emerald-400/35 bg-emerald-400/10 text-emerald-300'
+                    : 'border-sky-400/30 bg-sky-400/10 text-sky-300'
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    loading
+                      ? 'animate-pulse bg-amber-400'
+                      : source === 'supabase'
+                        ? 'bg-emerald-400'
+                        : 'bg-sky-400'
+                  }`}
+                />
+                {loading
+                  ? 'SYNCING...'
+                  : source === 'supabase'
+                    ? 'BACKEND: SUPABASE'
+                    : 'TELEMETRY: DEMO'}
+              </span>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main 2-Column Mission Grid */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <BiometricsPanel
-            profile={activeProfile}
-            mission={biometrics.mission}
-            vitals={biometrics.vitals}
-            alerts={biometrics.alerts}
-            onRescan={refresh}
-          />
-          <SolutionPanel data={syncedSolutionData} onDispensed={logDispense} />
-        </div>
-      </main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-8 sm:py-8">
+          {activeView === 'astronaut' && (
+            <AstronautView
+              profile={activeProfile}
+              mission={biometrics.mission}
+              vitals={biometrics.vitals}
+              onRescan={refresh}
+            />
+          )}
+
+          {activeView === 'medical' && (
+            <MedicalView
+              alerts={biometrics.alerts}
+              prescriptions={syncedSolutionData.prescriptions}
+              onGoToDispenser={() => setActiveView('dispenser')}
+            />
+          )}
+
+          {activeView === 'dispenser' && (
+            <DispenserView
+              crew={syncedSolutionData.crew}
+              prescriptions={syncedSolutionData.prescriptions}
+              seedVault={syncedSolutionData.seedVault}
+              onDispensed={handleDispensed}
+            />
+          )}
+
+          {activeView === 'inventory' && (
+            <InventoryView
+              seedVault={syncedSolutionData.seedVault}
+              radiation={syncedSolutionData.radiation}
+            />
+          )}
+
+          {activeView === 'plants' && (
+            <PlantStatusView
+              prescriptions={syncedSolutionData.prescriptions}
+              seedVault={syncedSolutionData.seedVault}
+              dispenseHistory={syncedSolutionData.dispenseHistory}
+              localDispensed={localDispensed}
+              dataSource={source}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Modals */}
+      <ProfileSwitcherModal
+        isOpen={isSwitcherOpen}
+        onClose={() => setIsSwitcherOpen(false)}
+        profiles={profiles}
+        activeProfileId={activeProfile.id}
+        onSelectProfile={setActiveProfileId}
+        onDeleteProfile={handleDeleteProfile}
+        onOpenNewProfile={() => setIsProfileModalOpen(true)}
+      />
 
       <NewProfileModal
         isOpen={isProfileModalOpen}

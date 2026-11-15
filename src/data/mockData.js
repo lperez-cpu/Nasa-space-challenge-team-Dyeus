@@ -1,65 +1,60 @@
-// Datos temporales para previsualizar SolutionPanel.
-// En el proyecto final se pueden reemplazar por datos reales de BiometricsPanel
-// y pasarse como prop:  <SolutionPanel data={solutionData} />
+// Fallback demo data used only when Supabase env vars are missing or unreachable.
 
 export const solutionData = {
-  crew: { id: "CRW-07", name: "Especialista de Misión", module: "HAB-2 / Bio-Lab" },
+  crew: { id: "CRW-07", name: "Mission Specialist", module: "HAB-2 / Bio-Lab" },
 
-  // Tasa de dosis medida por el instrumento RAD del rover Curiosity durante el
-  // crucero Tierra–Marte (~1.84 mSv/día, Zeitlin et al., Science 2013).
-  radiation: { rateMsvPerDay: 1.84, source: "MSL/RAD · crucero Tierra–Marte" },
+  // Dose rate measured by Curiosity's RAD instrument during Earth–Mars cruise (~1.84 mSv/day).
+  radiation: { rateMsvPerDay: 1.84, source: "MSL/RAD · Earth–Mars cruise" },
 
-  // Columnas del plan: condición · planta · compuesto activo · dosis · tiempo de cultivo · respaldo NASA
   prescriptions: [
     {
       id: "rx-ashwagandha",
       plant: "Ashwagandha",
       latin: "Withania somnifera",
-      trigger: "Cortisol Alto",
+      trigger: "High Cortisol",
       triggerValue: "28.4 µg/dL",
-      effect: "Adaptógeno · reduce estrés y cortisol",
-      compound: "Withanólidos",
-      dose: "600 mg/día extracto de raíz",
+      effect: "Adaptogen · reduces stress and serum cortisol",
+      compound: "Withanolides",
+      dose: "600 mg/day root extract",
       harvestDays: 21,
       nasaBacked: false,
-      evidence: "Evidencia clínica en Tierra (ensayos sobre cortisol)",
+      evidence: "Earth clinical evidence (cortisol trials)",
     },
     {
       id: "rx-tomate-micro",
-      plant: "Tomate Micro",
+      plant: "Micro Tomato",
       latin: "Solanum lycopersicum (micro)",
-      trigger: "Déficit Vitamínico",
-      triggerValue: "Vit. C / Licopeno bajos",
-      effect: "Aporte de vitamina C, K y antioxidantes",
-      compound: "Licopeno · Vitamina C",
-      dose: "1 porción (~50 g) diaria",
+      trigger: "Vitamin Deficiency",
+      triggerValue: "Low Vit. C / Lycopene",
+      effect: "Provides Vitamin C, K, and antioxidants",
+      compound: "Lycopene · Vitamin C",
+      dose: "1 serving (~50 g) daily",
       harvestDays: 28,
       nasaBacked: true,
-      evidence: "Tomate enano cultivado en la ISS (Veggie VEG-05)",
+      evidence: "Dwarf tomato grown on the ISS (Veggie VEG-05)",
     },
   ],
 
-  // Dosis acumulada del cartucho = exposureDays × rateMsvPerDay × shielding
   seedVault: [
     {
       id: "cart-gen3",
-      cartridge: "Cartucho Gen-3",
+      cartridge: "Gen-3 Cartridge",
       plant: "Ashwagandha",
       viability: 42,
       status: "rejected",
-      label: "DAÑO POR RADIACIÓN (DESCARTADO)",
-      detail: "Roturas de doble cadena detectadas · almacenado sin blindaje",
+      label: "RADIATION DAMAGE (DISCARDED)",
+      detail: "Double-strand breaks detected · stored unshielded",
       exposureDays: 410,
       shielding: 1.0,
     },
     {
       id: "cart-gen2",
-      cartridge: "Cartucho Gen-2",
+      cartridge: "Gen-2 Cartridge",
       plant: "Ashwagandha",
       viability: 98,
       status: "approved",
-      label: "ADN VERIFICADO (AUTORIZADO)",
-      detail: "Integridad genómica dentro de tolerancia · bóveda con blindaje de agua",
+      label: "DNA VERIFIED (AUTHORIZED)",
+      detail: "Genomic integrity within tolerance · water-shielded vault",
       exposureDays: 410,
       shielding: 0.35,
       rxTag: "RX: ASHWAGANDHA GEN-2",
@@ -92,54 +87,52 @@ export const astronautProfile = {
 export const vitalSigns = {
   cortisol: {
     id: "cortisol",
-    label: "Cortisol Sérico",
+    label: "Serum Cortisol",
     value: "28.4 µg/dL",
     numericValue: 28.4,
     unit: "µg/dL",
     referenceRange: "6.0 – 18.4 µg/dL",
     status: "HIGH",
-    alertTitle: "Cortisol Alto (Estrés Crónico)",
-    alertDetail: "Elevación sostenida +54% sobre umbral nominal de vuelo.",
+    alertTitle: "High Cortisol (Chronic Stress)",
+    alertDetail: "Sustained elevation +54% above nominal flight threshold.",
   },
   vitamins: {
     id: "vitamins",
-    label: "Índice Vitamínico (C / D3 / B12)",
+    label: "Vitamin Index (C / D3 / B12)",
     value: "34%",
     numericValue: 34,
     unit: "%",
     referenceRange: "75% – 100%",
     status: "CRITICAL",
-    alertTitle: "Déficit Vitamínico",
-    alertDetail: "Depleción severa detectada. Riesgo inmunológico y óseo.",
+    alertTitle: "Vitamin Deficiency",
+    alertDetail: "Severe depletion detected. Immune and bone density risk.",
   },
   heartRate: {
     id: "heartRate",
-    label: "Frecuencia Cardíaca",
+    label: "Heart Rate",
     value: "96 BPM",
     referenceRange: "60 – 85 BPM",
     status: "ELEVATED",
   },
   spo2: {
     id: "spo2",
-    label: "Saturación O₂",
-    value: "97.8%",
-    referenceRange: "95.0 – 100%",
+    label: "Blood Oxygen (SpO₂)",
+    value: "98%",
+    referenceRange: "95% – 100%",
     status: "NOMINAL",
   },
   radiationDose: {
     id: "radiationDose",
-    label: "Exposición Radiación GCR",
-    value: "1.84 mSv/d",
-    referenceRange: "< 1.50 mSv/d",
-    status: "ELEVATED",
+    label: "Cumulative Radiation",
+    value: "272.3 mSv",
+    referenceRange: "< 600 mSv",
+    status: "NOMINAL",
   },
   circadianDrift: {
     id: "circadianDrift",
-    label: "Desfase Circadiano",
-    value: "+3.2 HRS",
-    referenceRange: "± 0.5 HRS",
+    label: "Circadian Drift",
+    value: "+1.8 hrs",
+    referenceRange: "±0.5 hrs",
     status: "ELEVATED",
   },
 };
-
-export default solutionData;
