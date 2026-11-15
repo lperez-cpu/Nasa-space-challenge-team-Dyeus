@@ -136,14 +136,15 @@ const radiationFor = (day) => {
   };
 };
 
-// ── Fuente de cada dato: el equipo real de la NASA que lo produciría en la ISS ──
+// ── Fuente de cada dato: el equipo real de investigación en la ISS que lo produciría ──
+// (no todo es de la NASA: Bio-Monitor es de la Agencia Espacial Canadiense, EveryWear de CNES).
 // (doc del equipo "Fuentes y Etiquetas NASA"). En la demo los datos llegan de astronaut_log
 // (cargados a mano o por el Arduino que simula el wearable): por eso `sourceSimulated`.
 export const DATA_SOURCES = {
   // Enlaces del doc del equipo; los que no están verificados quedan en null.
-  bioMonitor: { name: "Bio-Monitor (Astroskin smart shirt)", url: "https://www.nasa.gov/mission_pages/station/research/experiments/explorer/Facility.html?#id=7392" },
+  bioMonitor: { name: "Bio-Monitor (CSA · Astroskin smart shirt)", url: "https://www.nasa.gov/mission_pages/station/research/experiments/explorer/Facility.html?#id=7392" },
   actiwatch: { name: "Actiwatch Spectrum", url: null },
-  everyWear: { name: "EveryWear app (crew self-report)", url: "https://www.nasa.gov/mission_pages/station/research/experiments/explorer/Investigation.html?#id=2042" },
+  everyWear: { name: "EveryWear app (CNES · crew self-report)", url: "https://www.nasa.gov/mission_pages/station/research/experiments/explorer/Investigation.html?#id=2042" },
   rad: { name: "MSL/RAD cruise dose rate (Zeitlin et al., Science 2013)", url: null },
   veggie: { name: "Veggie (Vegetable Production System)", url: "https://www.nasa.gov/missions/station/so-you-want-to-be-a-space-farmer/" },
   aph: { name: "Advanced Plant Habitat (APH)", url: "https://science.nasa.gov/mission/advanced-plant-habitat/" },
@@ -662,4 +663,141 @@ export async function recordProfileView(patientId) {
   await rest("profile_views", {
     method: "POST", body: { viewer_id: authSession.user.id, patient_id: patientId }, prefer: "return=minimal",
   }).catch((err) => console.warn("[E.D.E.N.] No se pudo registrar la vista de perfil:", err));
+}
+
+const validEmail = (email) => {
+  const mail = String(email ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) throw new Error("A valid email is required.");
+  return mail;
+};
+
+/**
+ * Registro propio (pestaña "New User"). La cuenta entra SIEMPRE como 'paciente': lo fija el trigger
+ * handle_new_user (supabase/signup_trigger.sql), que ignora cualquier rol enviado por el cliente.
+ * Devuelve { user, profile, session } con la sesión ya iniciada; si el proyecto exigiera confirmar el
+ * correo, devuelve { user, profile: null, session: null, needsConfirmation: true }.
+ */
+export async function signUpCrew({ full_name, email, password } = {}) {
+  if (!supabaseEnabled) throw new Error("Supabase is not configured.");
+  const mail = validEmail(email);
+  if (!password || password.length < 6) throw new Error("Password must be at least 6 characters.");
+  const d = await authRequest("signup", {
+    body: { email: mail, password, data: { full_name: String(full_name ?? "").trim().slice(0, 120) } },
+  }).catch((err) => {
+    if (/already registered|already exists/i.test(err.message)) throw new Error("This email already has an account. Use Sign In.");
+    throw err;
+  });
+  if (!d.access_token) {
+    const u = d.user ?? d;
+    return { user: u?.id ? { id: u.id, email: u.email } : null, profile: null, session: null, needsConfirmation: true };
+  }
+  authSession = fromTokenResponse(d);
+  const profile = await getCurrentProfile();
+  setAuthSession({ ...authSession, profile });
+  return { ...publicSession(), session: { expires_at: authSession.expires_at } };
+}
+
+/**
+ * Alta por Admin desde MOD-06 con cualquier rol. Llama a la Edge Function `provision-user`
+ * (supabase/functions/provision-user), que guarda la clave service_role del lado del servidor y
+ * comprueba que quien llama es admin. Devuelve { user, profile }.
+ */
+export async function provisionUserAccount({ full_name, email, password, role } = {}) {
+  if (!supabaseEnabled) throw new Error("Supabase is not configured.");
+  const mail = validEmail(email);
+  if (!password || password.length < 6) throw new Error("Password must be at least 6 characters.");
+  if (!ROLES.includes(role)) throw new Error(`Role must be one of: ${ROLES.join(", ")}.`);
+  const token = await userAccessToken();
+  if (!token) throw new Error("Sign in as an admin to create crew accounts.");
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/provision-user`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ full_name: String(full_name ?? "").trim().slice(0, 120), email: mail, password, role }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || data.message || `Account provisioning failed (${res.status}).`);
+  return data;
+}
+
+// ── Vista Doctor multipaciente e historial de signos ──
+// RLS decide qué se ve: doctor/admin ven a todos los astronautas; un paciente solo a sí mismo.
+
+const LEVEL_SCORE = (v) => { const p = parseLevel(v); return p ? (p.level === "HIGH" ? 2 : 1) : 0; }; // 0 normal · 1 moderado · 2 alto
+const VITALS_SELECT = "id,created_at,user_id,heart_rate,sleep_quality,energy_level,mood,days_in_space,symptoms," +
+  "stress_level,inflammation_level,cognitive_level,cardiovascular_level,nutrition_level";
+
+/** Punto del historial listo para graficar (números; los niveles van como 0/1/2). */
+const toVitalsPoint = (log) => ({
+  id: log.id,
+  at: log.created_at,
+  day: log.days_in_space ?? null,
+  heartRate: log.heart_rate ?? null,
+  sleepQuality: log.sleep_quality ?? null,
+  energy: log.energy_level ?? null,
+  mood: log.mood ?? null,
+  levels: Object.fromEntries(Object.keys(log).filter((k) => k.endsWith("_level") && k !== "energy_level")
+    .map((k) => [k.replace(/_level$/, ""), LEVEL_SCORE(log[k])])),
+  alerts: alertsFromLog(log).length,
+});
+
+/**
+ * Historial de signos en orden cronológico (más antiguo → más reciente), para un gráfico de tendencia.
+ * Sin patientId: el astronauta del último registro visible (el mismo que muestra la dashboard).
+ * Devuelve [{ id, at, day, heartRate, sleepQuality, energy, mood, levels: { stress, inflammation, … }, alerts }].
+ */
+export async function getVitalsHistory({ patientId, limit = 30 } = {}) {
+  if (!supabaseEnabled) return [];
+  let owner = patientId;
+  if (!owner) {
+    const [last] = await optional("astronaut_log?select=user_id&order=created_at.desc,id.desc&limit=1");
+    owner = last?.user_id;
+  }
+  const filter = owner ? `&user_id=eq.${encodeURIComponent(owner)}` : "";
+  const rows = await optional(`astronaut_log?select=${VITALS_SELECT}${filter}&order=created_at.desc,id.desc&limit=${Math.min(Number(limit) || 30, 200)}`);
+  return (rows ?? []).map(toVitalsPoint).reverse();
+}
+
+/**
+ * Lista de astronautas para la vista Doctor: [{ id, full_name, created_at, lastReading, daysInSpace, alerts }].
+ * Doctor/admin reciben toda la tripulación; un paciente, solo su propia fila.
+ */
+export async function getCrewPatients() {
+  if (!supabaseEnabled) return [];
+  const patients = await optional("user_profiles?select=id,full_name,created_at&role=eq.paciente&order=full_name.asc");
+  if (!patients?.length) return [];
+  const ids = patients.map((p) => p.id).join(",");
+  const logs = await optional(`astronaut_log?select=${VITALS_SELECT}&user_id=in.(${ids})&order=created_at.desc,id.desc&limit=500`);
+  const latest = new Map();
+  for (const l of logs ?? []) if (!latest.has(l.user_id)) latest.set(l.user_id, l);
+  return patients.map((p) => {
+    const l = latest.get(p.id);
+    return {
+      ...p,
+      lastReading: l?.created_at ?? null,
+      daysInSpace: l?.days_in_space ?? null,
+      alerts: l ? alertsFromLog(l).length : 0,
+    };
+  });
+}
+
+/**
+ * Ficha de un astronauta para la vista Doctor: { profile, latest, alerts, history }.
+ * Deja constancia en `profile_views` (auditoría: quién vio qué ficha) sin bloquear la UI.
+ */
+export async function getPatientRecord(patientId, { limit = 30 } = {}) {
+  if (!supabaseEnabled || !patientId) return null;
+  const id = encodeURIComponent(patientId);
+  const [[profile], history] = await Promise.all([
+    optional(`user_profiles?select=id,full_name,role,created_at&id=eq.${id}`),
+    optional(`astronaut_log?select=${VITALS_SELECT}&user_id=eq.${id}&order=created_at.desc,id.desc&limit=${Math.min(Number(limit) || 30, 200)}`),
+  ]);
+  if (!profile) return null; // sin permiso (RLS) o no existe
+  recordProfileView(patientId);
+  const latest = history?.[0] ?? null;
+  return {
+    profile,
+    latest,
+    alerts: latest ? alertsFromLog(latest) : [],
+    history: (history ?? []).map(toVitalsPoint).reverse(),
+  };
 }

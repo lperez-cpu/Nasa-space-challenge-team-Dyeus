@@ -28,3 +28,6 @@ dyeus_app CODIGO APARTE NO MESCLAR/
 
 # Credenciales locales (cuentas demo): NUNCA subir al repo público
 *.local.txt
+
+# Backups de la base (datos de salud): nunca al repo público
+backups/

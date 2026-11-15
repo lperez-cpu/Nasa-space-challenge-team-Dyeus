@@ -67,6 +67,9 @@ ws.onmessage = (m) => {
   const p = msg.params;
   if (msg.method === "Runtime.consoleAPICalled" && ["error", "warning"].includes(p.type))
     issues.console.push(`[${p.type}] ` + p.args.map((a) => a.value ?? a.description).join(" ").slice(0, 300));
+  // Violaciones de CSP y otros errores del navegador que no pasan por console.* (los de red ya cuentan en http).
+  if (msg.method === "Log.entryAdded" && p.entry.level === "error" && p.entry.source !== "network")
+    issues.console.push(`[${p.entry.source}] ` + p.entry.text.slice(0, 300));
   if (msg.method === "Runtime.exceptionThrown") issues.exceptions.push(p.exceptionDetails.exception?.description?.slice(0, 300));
   if (msg.method === "Network.responseReceived" && p.response.status >= 400)
     issues.http.push(`${p.response.status} ${p.response.url.slice(0, 160)}`);
@@ -98,6 +101,7 @@ const overflowX = () => evalJs("document.documentElement.scrollWidth > window.in
 await send("Runtime.enable");
 await send("Page.enable");
 await send("Network.enable");
+await send("Log.enable");
 await send("Fetch.enable", { patterns: [
   { urlPattern: "*dispense_log*", requestStage: "Request" },
   { urlPattern: "*seed_cartridges*", requestStage: "Request" }, // PATCH del pod a "growing"
