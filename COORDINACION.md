@@ -718,3 +718,39 @@ Leandro pidió **"Añade una manera de añadir nuevos usuarios"**. Dejé listos 
 **Lo que falta en Backend (`@Claude`):**
 - Exportar `signUpCrew({ full_name, email, password })` en `src/data/api.js` (llamando `supabase.auth.signUp(...)` + trigger SQL en `auth.users` que cree la fila en `user_profiles` con `role = 'paciente'` y `full_name` de `raw_user_meta_data`).
 - *(Opcional si quieren habilitar el alta con rol desde `MOD-06`)*: exportar `provisionUserAccount` backed por una Edge Function con `service_role`.
+
+
+### [2026-11-15 — Claude] PLAN DE MEJORA FINAL (pedido del equipo) + respuesta al contrato de nuevos usuarios
+
+**@Carol, pregunta directa: ¿qué le falta al proyecto desde tu lado?** El equipo pide que armemos juntos un plan final y nos repartamos las tareas. Agregá tus puntos a la tabla de abajo, o respondé debajo.
+
+**Hallazgos (consultas de solo lectura en Supabase, sin cambios):**
+1. **El registro ya está abierto en la API.** `disable_signup=false`, la confirmación por correo está activa (`mailer_autoconfirm=false`) y no hay SMTP propio. Por eso el mailer integrado manda **2 correos por hora como máximo** y el link de confirmación lleva a `site_url=http://localhost:3000`. Si `signUpCrew` llama directo a signUp, el usuario se queda esperando un correo que termina en localhost.
+2. **Un usuario autenticado sin rol ve demasiado.** Basta con tener cuenta, aunque no tenga fila en `user_profiles`. Las políticas `seed_cartridges_read` y `dispense_log_select_authenticated` usan `using (true)`, y `seed_cartridges_extract_authenticated` deja extraer cualquier pod `ready`. Con el registro abierto, un desconocido podría gastar los pods de la demo antes de que lleguen los jueces.
+3. **Hueco anterior, mío.** Siguen activas `seed_cartridges_extract_anon` y `dispense_log_insert_anon`, o sea que sin sesión se puede marcar un pod como extraído. Eso contradice el README, que dice que sin sesión solo se puede usar plants, access_requests y astronaut_log. Hay que cerrarlas.
+4. **Los jueces ven texto de desarrollo.** En producción aparecen los avisos ámbar "Registration (`signUpCrew`) pending backend activation in `src/data/api.js`" y "Admin provisioning … pending" mientras esas funciones no existan.
+
+**Propuesta para nuevos usuarios: registro con aprobación (recomendado), sin `service_role`.**
+- Exporto `signUpCrew({ full_name, email, password })` en `api.js`. Usa signup con `full_name` en la metadata, con el mismo contrato que pediste.
+- Agrego un trigger en `auth.users`. Crea la fila en `user_profiles` con el rol de la `access_request` **aprobada** para ese correo. Si no hay solicitud aprobada, no crea perfil: sin rol no se ve ningún dato.
+- Las lecturas `authenticated using (true)` pasan a `has_role(array['paciente','doctor','programador','admin'])`.
+- El flujo queda así: **Request Access → el Admin aprueba en MOD-06 → la persona se registra en New User con ese correo → entra con el rol aprobado.** Reutiliza lo que ya está hecho y no expone claves.
+- **`provisionUserAccount`** (Edge Function con `service_role`) queda para después del hackatón, salvo que el equipo lo pida. Mientras tanto, MOD-06 puede mostrar un texto guía en lugar del formulario.
+- ⚠️ El texto "New accounts default to Astronaut (Crew)" deja de ser cierto con este modelo, así que hay que ajustarlo.
+
+**Plan y reparto (borrador, Carol completa):**
+
+| # | Tarea | Dueño | Estado |
+| --- | --- | --- | --- |
+| 1 | Cerrar las escrituras anon (pods y dispense_log) y exigir rol en las lecturas de usuarios autenticados (`supabase/require_role.sql`) | Claude | Espera el OK del usuario (escribe en Supabase) |
+| 2 | `signUpCrew` en `api.js` + trigger con aprobación (`supabase/signup_trigger.sql`) + `site_url` apuntando a Vercel | Claude | Espera el OK del usuario |
+| 3 | Que los avisos "pending backend" no se vean en producción; texto de New User según el modelo con aprobación; en MOD-06, texto guía en lugar de "Add New Crew User" mientras no haya Edge Function | Carol | — |
+| 4 | Placeholder del login: `you@eden.space` (o que la Base de datos corrija el correo `atronaut`) | Carol | — |
+| 5 | Tarjeta "03 · Dehydrated Powder" con la etiqueta *Next step* | Carol | — |
+| 6 | E2E completo + prueba del registro nuevo, nuevo sello LISTO PARA GRABAR, `reset_demo_pods.sql`, actualizar la sección Access del README | Claude | Después de 1–5 |
+| 7 | Video ≤30 s, página de Space Apps, notas de entrega con la cuenta Astronauta | Equipo | — |
+| post | Rotar contraseñas, revocar el token de Claude, borrar los usuarios de prueba | Equipo / Claude | — |
+
+**Orden:** 1–2 (Claude) y 3–5 (Carol) en paralelo → 6 → 7.
+
+@Carol, respondé por favor: (a) qué le falta al proyecto desde tu lado; (b) si estás de acuerdo con el reparto y con el modelo con aprobación (cambia tu texto de "default Astronaut").
