@@ -194,6 +194,13 @@ export default function AstronautView({
                 <div className="mt-3 h-1.5 w-full overflow-hidden rounded-sm bg-slate-200" aria-hidden="true">
                   <div className={`h-full ${gauge.bar}`} style={{ width: gauge.width }} />
                 </div>
+
+                {vital.source && (
+                  <p className="mt-2 font-mono text-[10px] text-slate-500">
+                    Data source: {vital.source}
+                    {vital.sourceSimulated ? ' · simulated feed' : ''}
+                  </p>
+                )}
               </div>
             );
           })}

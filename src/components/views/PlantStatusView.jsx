@@ -35,6 +35,7 @@ export default function PlantStatusView({
       key: entry.id || `${entry.cartridge_id}-${idx}`,
       plant: plantName,
       latin: plantInfo?.latin || null,
+      habitatLabel: plantInfo?.habitatLabel || null,
       cartridge: cart?.cartridge || entry.cartridge_id || '—',
       stage:
         elapsedDays <= 2
@@ -113,8 +114,9 @@ export default function PlantStatusView({
         {/* Active Plant Progress Cards with Radial Rings */}
         {activeCultures.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-5 text-sm text-slate-600">
-            No cartridges currently in cultivation. Dispense an authorized cartridge from the{' '}
-            <strong className="text-[#0F172A]">Dispenser</strong> module to initiate a hydroponic cycle.
+            No Seed Pods currently in cultivation. Extract an authorized Seed Pod from the{' '}
+            <strong className="text-[#0F172A]">Dispenser</strong> module and plug it into the{' '}
+            <strong className="text-[#0F172A]">NASA Veggie Module</strong> to initiate growth.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -135,6 +137,11 @@ export default function PlantStatusView({
                     <p className="mt-2.5 font-mono text-xs font-medium text-slate-600 tabular-nums">
                       DAY {item.elapsedDays} OF {item.totalDays}
                     </p>
+                    {item.habitatLabel && (
+                      <p className="mt-1 font-mono text-[10px] text-slate-500">
+                        {item.habitatLabel}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-center gap-1">

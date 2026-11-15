@@ -65,6 +65,12 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                           REF RANGE: {alertItem.referenceRange}
                         </p>
                       )}
+                      {alertItem.source && (
+                        <p className="mt-1 font-mono text-[10px] text-red-700/80">
+                          Data source: {alertItem.source}
+                          {alertItem.sourceSimulated ? ' · simulated feed' : ''}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -82,9 +88,9 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
         )}
       </section>
 
-      {/* 2. Living Pharmacy Prescriptions */}
+      {/* 2. Dietary Therapeutics (Food as Medicine) */}
       <section
-        aria-label="Living Pharmacy - Automated Botanical Prescription"
+        aria-label="Dietary Therapeutics - Food as Medicine"
         className="rounded-lg border border-slate-200 bg-white p-6 shadow-xs"
       >
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
@@ -94,10 +100,10 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
             </span>
             <div>
               <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
-                Living Pharmacy
+                Dietary Therapeutics · Food as Medicine
               </p>
               <h2 className="text-lg font-bold text-[#0F172A]">
-                Automated Botanical Prescription
+                Therapeutic Nutrition Recommendation
               </h2>
             </div>
           </div>
@@ -108,14 +114,14 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
               onClick={onGoToDispenser}
               className="cursor-pointer rounded-md bg-[#E14D2A] px-3.5 py-2 font-mono text-xs font-bold text-white transition-colors hover:bg-[#c94120] focus-visible:outline-2 focus-visible:outline-[#E14D2A]"
             >
-              Go to Dispenser →
+              Select Seed Pod →
             </button>
           )}
         </div>
 
         {prescriptions.length === 0 ? (
           <p className="text-sm text-slate-600">
-            No active alerts · no botanical prescription required in this cycle.
+            No active alerts · no dietary therapeutic crop required in this cycle.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -142,13 +148,13 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                     <dl className="mt-4 grid grid-cols-1 gap-2 rounded-md border border-slate-200 bg-white p-3 text-xs">
                       {rx.compound && (
                         <div className="flex justify-between gap-3">
-                          <dt className="font-mono text-slate-500">COMPOUND</dt>
+                          <dt className="font-mono text-slate-500">BIOACTIVE NUTRIENT</dt>
                           <dd className="text-right font-semibold text-[#0F172A]">{rx.compound}</dd>
                         </div>
                       )}
                       {rx.dose && (
                         <div className="flex justify-between gap-3">
-                          <dt className="font-mono text-slate-500">DOSE</dt>
+                          <dt className="font-mono text-slate-500">SERVING / PORTION</dt>
                           <dd className="text-right font-semibold text-[#0F172A]">{rx.dose}</dd>
                         </div>
                       )}
@@ -169,6 +175,10 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                     </span>
                   </div>
 
+                  {rx.habitatLabel && (
+                    <p className="font-mono text-[10px] text-slate-500">{rx.habitatLabel}</p>
+                  )}
+
                   <div className="flex items-center justify-between font-mono text-xs">
                     <span className="text-slate-500">HARVEST TIME</span>
                     <span className="font-bold text-[#0284C7] tabular-nums">
@@ -180,6 +190,53 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
             ))}
           </div>
         )}
+      </section>
+
+      {/* 3. Natural Consumption Protocol (Zero Chemical Synthesis) */}
+      <section
+        aria-label="Natural Consumption Protocol"
+        className="rounded-lg border border-slate-200 bg-white p-6 shadow-xs"
+      >
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-4">
+          <div>
+            <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-[#0284C7] uppercase">
+              Zero Chemical Synthesis · ISS Hardware Only
+            </p>
+            <h2 className="mt-0.5 text-lg font-bold text-[#0F172A]">
+              Natural Consumption Protocol
+            </h2>
+          </div>
+          <span className="rounded-md border border-slate-200 bg-[#F8FAFC] px-2.5 py-1 font-mono text-xs font-semibold text-slate-600">
+            NO PHARMA LAB REQUIRED
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-4">
+            <p className="font-mono text-[11px] font-bold tracking-wider text-[#E14D2A] uppercase">
+              01 · Infusion (Space Tea)
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+              Cut harvested leaves and rehydrate in a sealed drink pouch using the existing ISS hot water dispenser.
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-4">
+            <p className="font-mono text-[11px] font-bold tracking-wider text-emerald-700 uppercase">
+              02 · Direct Consumption
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+              Harvest fresh raw leaves from the Veggie tray and consume directly alongside the daily crew meal ration.
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-4">
+            <p className="font-mono text-[11px] font-bold tracking-wider text-[#0284C7] uppercase">
+              03 · Dehydrated Powder
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+              Dry harvested leaves and mix as botanical powder into standard ISS nutritional shakes.
+            </p>
+          </div>
+        </div>
       </section>
     </div>
   );

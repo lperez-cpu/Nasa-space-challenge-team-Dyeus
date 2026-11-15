@@ -46,14 +46,16 @@ export default function DispenserView({
 
   const stageText =
     progress < 35
-      ? 'Releasing cartridge from vault...'
+      ? 'Unlocking Seed Pod from vault...'
       : progress < 70
-        ? 'Verifying cryogenic seal...'
-        : 'Transferring to hydroponic tray...';
+        ? 'Verifying radiation-free seal...'
+        : 'Preparing manual Veggie extraction...';
+
+  const podCode = approved?.id?.toUpperCase() || approved?.cartridge?.toUpperCase() || 'POD-GEN2';
 
   return (
     <section
-      aria-label="Capsule Dispenser"
+      aria-label="Seed Pod Dispenser"
       className="flex flex-col gap-6 rounded-lg border border-slate-200 bg-white p-6 shadow-xs"
     >
       {/* Header */}
@@ -64,10 +66,10 @@ export default function DispenserView({
           </span>
           <div>
             <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-[#E14D2A] uppercase">
-              Cultivation Bay · {crew?.module || 'HAB-2 / Bio-Lab'}
+              ISS Veggie Plug &amp; Play · {crew?.module || 'HAB-2 / Bio-Lab'}
             </p>
             <h2 className="text-lg font-bold text-[#0F172A]">
-              Autonomous Capsule Dispenser
+              Seed Pod Extraction &amp; Loading
             </h2>
           </div>
         </div>
@@ -77,7 +79,7 @@ export default function DispenserView({
         </span>
       </div>
 
-      {/* Authorized Cartridge Summary */}
+      {/* Authorized Seed Pod Summary + Anatomy */}
       {approved ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -87,7 +89,7 @@ export default function DispenserView({
               </span>
               <div>
                 <p className="font-mono text-[11px] font-bold tracking-wider text-emerald-800 uppercase">
-                  Authorized Cartridge Ready for Loading
+                  Action Required · Extract Seed Pod [{podCode}]
                 </p>
                 <h3 className="mt-0.5 text-xl font-bold text-[#0F172A]">
                   {approved.cartridge} · {approved.plant}
@@ -104,9 +106,31 @@ export default function DispenserView({
             </div>
           </div>
 
+          {/* Seed Pod 3-part composition */}
+          <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+            <div className="rounded-md border border-emerald-200 bg-white px-3 py-2">
+              <p className="font-mono text-[10px] font-bold text-slate-500 uppercase">01 · Cultivar</p>
+              <p className="mt-0.5 text-xs font-semibold text-[#0F172A]">
+                {approved.plant} (Radiation-Cleared)
+              </p>
+            </div>
+            <div className="rounded-md border border-emerald-200 bg-white px-3 py-2">
+              <p className="font-mono text-[10px] font-bold text-slate-500 uppercase">02 · Growth Medium</p>
+              <p className="mt-0.5 text-xs font-semibold text-[#0F172A]">
+                0-G Synthetic Root Substrate
+              </p>
+            </div>
+            <div className="rounded-md border border-emerald-200 bg-white px-3 py-2">
+              <p className="font-mono text-[10px] font-bold text-slate-500 uppercase">03 · Dry Matrix</p>
+              <p className="mt-0.5 text-xs font-semibold text-[#0F172A]">
+                Hydration-Ready Nutrients
+              </p>
+            </div>
+          </div>
+
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-emerald-200/80 pt-4 font-mono text-xs">
             <span className="rounded border border-emerald-300 bg-white px-2.5 py-1 font-semibold text-emerald-800">
-              {approved.rxTag || `RX: ${approved.plant.toUpperCase()}`}
+              {approved.rxTag || `POD: ${podCode}`}
             </span>
             <span className="text-slate-600">
               Estimated harvest:{' '}
@@ -118,18 +142,19 @@ export default function DispenserView({
         </div>
       ) : (
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-5 text-sm font-medium text-amber-900">
-          No authorized cartridge is currently available in the Seed Vault.
+          No radiation-cleared Seed Pod is currently available in the Seed Vault.
         </div>
       )}
 
-      {/* Dispense Action Area */}
+      {/* Plug & Play Extraction Action Area */}
       <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-5">
         {phase === 'idle' && (
           <div className="flex flex-col items-center gap-4 py-2 text-center">
-            <p className="max-w-md text-sm text-slate-600">
-              Initiating dispense transfers the verified seed cartridge from the cryogenic vault
-              to the hydroponic bay for cultivation. Upon harvest ({matchingRx?.harvestDays ?? '—'} days),
-              it yields the prescribed preparation ({matchingRx?.dose || 'protocol dose'}) logged in{' '}
+            <p className="max-w-lg text-sm text-slate-600">
+              Extract Seed Pod <strong className="font-mono text-[#0F172A]">[{podCode}]</strong>{' '}
+              from the vault, plug it into the existing <strong>NASA Veggie Module</strong>, and
+              inject water to begin growth ({matchingRx?.harvestDays ?? '—'} days to harvest,{' '}
+              {matchingRx?.dose || 'therapeutic serving'}). Logged in{' '}
               <code className="rounded bg-slate-200 px-1 py-0.5 font-mono text-xs text-[#0F172A]">
                 dispense_log
               </code>.
@@ -140,7 +165,7 @@ export default function DispenserView({
               disabled={!approved}
               className="w-full max-w-md cursor-pointer rounded-md bg-[#E14D2A] px-6 py-4 font-mono text-sm font-bold tracking-wider text-white uppercase transition-colors hover:bg-[#c94120] active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E14D2A] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              DISPENSE {approved ? approved.cartridge.toUpperCase() : 'CARTRIDGE'}
+              EXTRACT SEED POD [{podCode}]
             </button>
           </div>
         )}
@@ -170,10 +195,11 @@ export default function DispenserView({
               <CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-600" />
               <div>
                 <h3 className="font-mono text-sm font-bold tracking-wide text-emerald-900 uppercase">
-                  Cartridge Ready for Cultivation
+                  Seed Pod [{podCode}] Extracted · Plug into Veggie &amp; Hydrate
                 </h3>
                 <p className="mt-0.5 text-xs text-emerald-800">
-                  {approved?.rxTag} · Estimated harvest in {matchingRx?.harvestDays ?? '—'} days
+                  {approved?.rxTag} · Insert into NASA Veggie tray, inject water · Harvest in{' '}
+                  {matchingRx?.harvestDays ?? '—'} days
                 </p>
               </div>
             </div>
@@ -181,7 +207,7 @@ export default function DispenserView({
             <button
               type="button"
               onClick={reset}
-              title="Reset dispenser"
+              title="Reset extraction workflow"
               className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-semibold text-[#0F172A] transition-colors hover:border-[#E14D2A] hover:text-[#E14D2A] focus-visible:outline-2 focus-visible:outline-[#E14D2A]"
             >
               <RotateCcw className="h-3.5 w-3.5" />

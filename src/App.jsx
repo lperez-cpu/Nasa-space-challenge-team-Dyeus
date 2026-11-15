@@ -8,7 +8,7 @@ import DispenserView from './components/views/DispenserView';
 import InventoryView from './components/views/InventoryView';
 import MedicalView from './components/views/MedicalView';
 import PlantStatusView from './components/views/PlantStatusView';
-import { logDispense, useSolutionData } from './data/api';
+import { DATA_SOURCES, logDispense, useSolutionData } from './data/api';
 import { astronautProfile } from './data/mockData';
 
 const PROFILES_STORAGE_KEY = 'eden_crew_profiles';
@@ -230,6 +230,29 @@ export default function App() {
             />
           )}
         </main>
+
+        <footer className="mx-auto w-full max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="border-t border-slate-200 pt-4 font-mono text-[11px] text-slate-500">
+            <span className="font-semibold text-slate-600 uppercase">Data sources:</span>{' '}
+            {Object.values(DATA_SOURCES).map((srcItem, index, arr) => (
+              <span key={srcItem.name}>
+                {srcItem.url ? (
+                  <a
+                    href={srcItem.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline decoration-slate-300 underline-offset-2 transition-colors hover:text-[#0F172A]"
+                  >
+                    {srcItem.name}
+                  </a>
+                ) : (
+                  <span>{srcItem.name}</span>
+                )}
+                {index < arr.length - 1 ? ' · ' : ''}
+              </span>
+            ))}
+          </div>
+        </footer>
       </div>
 
       {/* Modals */}
