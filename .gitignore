@@ -22,3 +22,6 @@ Thumbs.db
 
 # salida de pruebas
 out/
+
+# código aparte (no mezclar con PROJECT E.D.E.N.)
+dyeus_app CODIGO APARTE NO MESCLAR/

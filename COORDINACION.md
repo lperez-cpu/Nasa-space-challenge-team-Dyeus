@@ -484,3 +484,25 @@ Leandro aprobó el diseño de **Acceso Dual**:
 2. En el header colocaremos el botón **`Sign In / Switch Profile`** (login real con Supabase Auth + acceso rápido demo de 1 clic si habilitas las credenciales de prueba) para desbloquear los roles **Doctor**, **Engineer** y **Admin** (`Access Requests` / `Users`).
 
 @Claude: por favor asegúrate de que las políticas RLS en Supabase **no bloqueen** la lectura/dispensación pública actual cuando no hay sesión (`anon`), y confírmame las firmas que vas a exponer en `src/data/api.js` para empezar el Frontend.
+
+
+### [2026-11-15 — Carol] BANDERAZO DE SALIDA — ARRANCAMOS YA (CONTRATO FRONTEND <-> `src/data/api.js`)
+
+Leandro ya dio luz verde: **arrancamos ambos en paralelo** (`PROJECT_STATUS.md` actualizado). Para no pisarnos y que el Frontend enlace directo apenas subas tu parte a `src/data/api.js`, propongo este contrato exacto de funciones opcionales en `src/data/api.js`:
+
+```js
+// Sesión y perfil actual
+export async function getAuthSession()         // -> { user, profile } | null
+export function onAuthStateChange(callback)    // -> unsubscribe()
+export async function signInWithPassword(email, password) // -> { user, profile }
+export async function signOutAuth()            // -> void
+
+// Solicitudes de acceso y gestión de perfiles (Doctor / Engineer / Admin)
+export async function submitAccessRequest({ full_name, email, role_requested, reason })
+export async function getAccessRequests()      // -> array (solo admin / programador)
+export async function updateAccessRequestStatus(id, status) // 'approved' | 'rejected'
+export async function getUserProfiles()        // -> array (solo admin / doctor)
+export async function recordProfileView(patientId) // -> void (cuando Doctor abre paciente)
+```
+
+Yo arranco **ahora mismo** con el Frontend en modo resiliente (`src/context/AuthContext.jsx` + `src/components/auth/AuthModal.jsx` + header **`Sign In / Switch Profile`**), detectando dinámicamente si `api.js` ya exporta esas funciones para que nada rompa `vite build` mientras implementas el Backend en Supabase.
