@@ -21,9 +21,12 @@ export const supabaseEnabled = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 async function rest(path, { method = "GET", body, prefer } = {}) {
   const headers = { apikey: SUPABASE_KEY, "Content-Type": "application/json" };
-  // Las claves "anon" antiguas son JWT y van también como Bearer;
+  // Con sesión iniciada, las consultas viajan con el token del usuario (rol "authenticated").
+  // Sin sesión: las claves "anon" antiguas son JWT y van también como Bearer;
   // las nuevas "sb_publishable_..." solo van en `apikey`.
-  if (SUPABASE_KEY.startsWith("eyJ")) headers.Authorization = `Bearer ${SUPABASE_KEY}`;
+  const token = await userAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  else if (SUPABASE_KEY.startsWith("eyJ")) headers.Authorization = `Bearer ${SUPABASE_KEY}`;
   if (prefer) headers.Prefer = prefer;
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -472,6 +475,9 @@ export function useSolutionData() {
   const refresh = useCallback(() => setTick((t) => t + 1), []);
   const lastKey = useRef("");
 
+  // Al iniciar o cerrar sesión cambian los permisos: se vuelve a consultar de inmediato.
+  useEffect(() => onAuthStateChange(() => refresh()), [refresh]);
+
   useEffect(() => {
     let alive = true;
     getSolutionData().then((r) => {
@@ -492,4 +498,168 @@ export function useSolutionData() {
   }, [refresh]);
 
   return { ...state, refresh };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Acceso Dual: inicio de sesión con Supabase Auth (REST, sin SDK).
+// Sin sesión la app funciona en modo demo (rol anon). Con sesión, cada consulta usa el token
+// del usuario y Supabase aplica las políticas por rol (supabase/auth_*_policies.sql).
+// Nombres alineados con src/context/AuthContext.jsx (Carol).
+// ════════════════════════════════════════════════════════════════════════════
+const AUTH_STORAGE_KEY = "eden_auth_session";
+const ROLES = ["paciente", "doctor", "programador", "admin"];
+const authListeners = new Set();
+let authSession = null; // { access_token, refresh_token, expires_at (s), user, profile }
+let refreshing = null;
+
+const storage = {
+  load() { try { return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "null"); } catch { return null; } },
+  save(s) {
+    try { if (s) localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(s)); else localStorage.removeItem(AUTH_STORAGE_KEY); }
+    catch { /* sin storage (modo privado, tests) */ }
+  },
+};
+authSession = typeof localStorage !== "undefined" ? storage.load() : null;
+
+const publicSession = () => (authSession ? { user: authSession.user, profile: authSession.profile ?? null } : null);
+const emitAuth = () => {
+  const s = publicSession();
+  authListeners.forEach((cb) => { try { cb(s); } catch { /* un listener roto no frena a los demás */ } });
+};
+const setAuthSession = (s) => { authSession = s; storage.save(s); emitAuth(); };
+
+async function authRequest(path, { body, token } = {}) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { message: text }; }
+  if (!res.ok) {
+    const raw = data.error_description || data.msg || data.message || data.error || `Auth ${res.status}`;
+    const invalid = /invalid login|invalid_grant|invalid credentials/i.test(`${raw} ${data.error ?? ""} ${data.error_code ?? ""}`);
+    const err = new Error(invalid ? "Invalid email or password." : raw);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+const fromTokenResponse = (d, profile = null) => ({
+  access_token: d.access_token,
+  refresh_token: d.refresh_token,
+  expires_at: d.expires_at ?? Math.floor(Date.now() / 1000) + (d.expires_in ?? 3600),
+  user: d.user ? { id: d.user.id, email: d.user.email } : authSession?.user,
+  profile,
+});
+
+/** Token vigente del usuario (lo renueva si vence en < 60 s). null = sin sesión → clave anon. */
+async function userAccessToken() {
+  if (!authSession?.access_token) return null;
+  if (authSession.expires_at - 60 > Date.now() / 1000) return authSession.access_token;
+  if (!refreshing) {
+    refreshing = authRequest("token?grant_type=refresh_token", { body: { refresh_token: authSession.refresh_token } })
+      .then((d) => { setAuthSession(fromTokenResponse(d, authSession?.profile ?? null)); return authSession.access_token; })
+      .catch(() => { setAuthSession(null); return null; }) // sesión vencida: vuelve a modo demo
+      .finally(() => { refreshing = null; });
+  }
+  return refreshing;
+}
+
+/** Perfil del usuario con sesión: { id, role, full_name } o null. */
+export async function getCurrentProfile() {
+  if (!supabaseEnabled || !authSession?.user?.id) return null;
+  try {
+    const rows = await rest(`user_profiles?select=id,role,full_name&id=eq.${encodeURIComponent(authSession.user.id)}`);
+    return rows?.[0] ?? null;
+  } catch { return null; }
+}
+
+/** Inicia sesión. Devuelve { user, profile }; lanza Error con mensaje legible si falla. */
+export async function signInWithPassword(email, password) {
+  if (!supabaseEnabled) throw new Error("Supabase is not configured.");
+  if (!email?.trim() || !password) throw new Error("Email and password are required.");
+  const d = await authRequest("token?grant_type=password", { body: { email: email.trim().toLowerCase(), password } });
+  authSession = fromTokenResponse(d); // token disponible para leer el perfil
+  const profile = await getCurrentProfile();
+  setAuthSession({ ...authSession, profile });
+  return publicSession();
+}
+
+/** Cierra la sesión y vuelve al modo demo (anon). */
+export async function signOutAuth() {
+  const token = authSession?.access_token;
+  setAuthSession(null);
+  if (token && supabaseEnabled) await authRequest("logout", { token }).catch(() => {});
+}
+
+/** Sesión actual { user, profile } o null (renueva el token si hace falta y completa el perfil). */
+export async function getAuthSession() {
+  if (!supabaseEnabled || !authSession) return null;
+  const token = await userAccessToken();
+  if (!token) return null;
+  if (!authSession.profile) {
+    const profile = await getCurrentProfile();
+    if (profile) setAuthSession({ ...authSession, profile });
+  }
+  return publicSession();
+}
+
+/** Suscribe cb(session | null) a los cambios de sesión. Devuelve la función para desuscribirse. */
+export function onAuthStateChange(cb) {
+  authListeners.add(cb);
+  return () => authListeners.delete(cb);
+}
+
+/** Formulario "Request Access" (público). role_requested ∈ paciente | doctor | programador | admin. */
+export async function submitAccessRequest({ full_name, email, role_requested, reason } = {}) {
+  if (!supabaseEnabled) throw new Error("Supabase is not configured.");
+  const mail = String(email ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) throw new Error("A valid email is required.");
+  if (!ROLES.includes(role_requested)) throw new Error(`Role must be one of: ${ROLES.join(", ")}.`);
+  await rest("access_requests", {
+    method: "POST",
+    body: clean({
+      full_name: String(full_name ?? "").trim().slice(0, 120),
+      email: mail,
+      requested_role: role_requested,
+      reason: String(reason ?? "").trim().slice(0, 500),
+      status: "pending",
+    }),
+    prefer: "return=minimal",
+  });
+  return { ok: true };
+}
+
+/** Solicitudes de acceso (solo admin; otros roles reciben []). Incluye role_requested para la UI. */
+export async function getAccessRequests() {
+  if (!supabaseEnabled) return [];
+  const rows = await rest("access_requests?select=*&order=created_at.desc").catch(() => []);
+  return (rows ?? []).map((r) => ({ ...r, role_requested: r.requested_role }));
+}
+
+/** Aprueba o rechaza una solicitud (solo admin). Lanza error si RLS no lo permite. */
+export async function updateAccessRequestStatus(id, status) {
+  if (!["approved", "rejected", "pending"].includes(status)) throw new Error("Invalid status.");
+  const rows = await rest(`access_requests?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH", body: { status }, prefer: "return=representation",
+  });
+  if (!rows?.length) throw new Error("Not allowed: only an admin can review access requests.");
+  return rows[0];
+}
+
+/** Directorio de perfiles (doctor/admin ven todos; el resto solo el suyo). */
+export async function getUserProfiles() {
+  if (!supabaseEnabled) return [];
+  return (await rest("user_profiles?select=id,role,full_name,created_at&order=created_at.asc").catch(() => [])) ?? [];
+}
+
+/** Registra que el usuario con sesión vio el perfil de un paciente (auditoría). No bloquea la UI. */
+export async function recordProfileView(patientId) {
+  if (!supabaseEnabled || !authSession?.user?.id || !patientId) return;
+  await rest("profile_views", {
+    method: "POST", body: { viewer_id: authSession.user.id, patient_id: patientId }, prefer: "return=minimal",
+  }).catch((err) => console.warn("[E.D.E.N.] No se pudo registrar la vista de perfil:", err));
 }
