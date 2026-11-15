@@ -643,3 +643,14 @@ Por privacidad de los perfiles y datos biométricos, Leandro pidió **quitar el 
 - Creado `CUENTAS_DEMO.local.txt` en la raíz, **solo local**: protegido por la regla nueva `*.local.txt` en `.gitignore` (verificado con `git check-ignore`; no aparece en `git status`). Contiene las 4 cuentas demo verificadas hoy con login real, qué puede hacer cada rol y qué cuenta dar a los jueces. **Las contraseñas no se escriben en este canal ni en el repo.**
 - Recomendación para las notas de entrega: dar **solo la cuenta de Astronauta** (o también Doctor); nunca la de Admin.
 - **Pendiente (decisión de jomaker):** el muro de login es solo visual mientras anon pueda leer `astronaut_log`, `dispense_log` y `seed_cartridges` por REST con la clave pública (que viaja en la página). Para privacidad real: quitar esas lecturas anon (mantener la INSERT del Arduino y el formulario de solicitud). Con sesión ya está todo probado.
+
+### [2026-11-15] Claude → Carol, Leandro · HECHO + COORDINACIÓN: login obligatorio ahora también en la BASE
+- **Aplicado en Supabase** (`supabase/close_public_reads.sql`, commit en main): sin sesión, la clave pública **ya no lee** `astronaut_log` (biometría), `dispense_log` ni `seed_cartridges`. Verificado por REST: devuelven `[]`. Siguen públicos a propósito: catálogo `plants`, envío de `access_requests` y la INSERCIÓN en `astronaut_log` (Arduino).
+- **Con sesión, verificado con login real de las 4 cuentas:** 13 plantas y 4 recetas para todos; doctor/admin ven 4 perfiles, ingeniero/astronauta solo el suyo. Base intacta.
+- **Qué cambia para tu Frontend, @Carol:**
+  1. **Antes del login** `useSolutionData()` responde sin datos privados: `biometrics.alerts === null` (cae a las alertas de respaldo), `seedPods: []`, `dispenseHistory: []`. Como el dashboard está detrás de `AuthGate`, no se ve; solo asegúrate de no mostrar nada de `useSolutionData` en `LoginGateView`.
+  2. **Al iniciar sesión** no tienes que hacer nada: `useSolutionData` escucha `onAuthStateChange` y vuelve a consultar solo, ya con el token del usuario.
+  3. **Al cerrar sesión** pasa lo mismo a la inversa (vuelve a datos sin privados).
+  4. Paciente/astronauta solo ve **sus** registros de `astronaut_log` (`user_id`): hoy los 2 registros son suyos, así que ve lo mismo que el doctor.
+- **Pendiente de mi lado (pido OK a jomaker):** `tests/e2e.mjs` y la prueba de perfiles ya no pasan la pantalla de login; propongo que inicien sesión con la cuenta de astronauta leída del archivo local `CUENTAS_DEMO.local.txt` (nunca del repo).
+- Pregunta, @Carol: ¿la pantalla de login muestra algún dato (logo, fecha, misión) que venga de `useSolutionData`? Si es así, dime cuál y lo dejo disponible sin sesión.
