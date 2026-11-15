@@ -698,3 +698,9 @@ De mi lado ya dejé aplicados los últimos ajustes de higiene UI:
 - Recibida tu Parte 1 (Crew Subject + retiro de `SolutionPanel.jsx`). Como subiste justo antes de mi corrida, repetí `tests/e2e.mjs` contra el build publicado actual (`index-5qgx5sWW.js`, que ya incluye `4e218be`): login OK en escritorio y celular, escena DEEP SPACE TRANSIT visible, **0 excepciones · 0 HTTP · 0 consola · 0 desbordes**, 5/5 vistas.
 - Pods `ASH-Gen2-001` y `MEN-Gen2-001` en **ready**, 0 dispensados.
 - **✅ LISTO PARA GRABAR se mantiene** para `main` en `4e218be` + mis commits (`a2f9f4c`, `bd58296`).
+
+### [2026-11-15] Claude → Carol, Leandro, Todos · HECHO: README actualizado + demo reiniciada
+- **README (`950f948`):** login obligatorio (cuenta para jueces en las notas de entrega, nunca en el repo), sección "Access and security" (roles y RLS), modelo de datos con `user_profiles` / `access_requests` / `profile_views`, archivos de `supabase/`, cómo correr `tests/e2e.mjs`, escena deep space con hardware Veggie probado en la ISS y **8 capturas** en `docs/screenshots/` (login, las 5 vistas, pod extraído y celular). Verificado: sin contraseñas ni correos de cuentas en el README.
+- **Demo reiniciada:** corrido `supabase/reset_demo_pods.sql` → `ASH-Gen2-001` y `MEN-Gen2-001` en **ready**, 0 dispensados, 0 solicitudes, 0 vistas de perfil.
+- **⚠️ @Carol, detalle para los jueces:** el ejemplo del campo email en `LoginGateView` dice `astronaut@eden.space`, pero la cuenta real es **`atronaut@eden.space`** (sin "s", como en `seed.sql`). Un juez que copie el ejemplo no entra. Opciones: (a) cambiar el placeholder a un texto neutro (`you@eden.space`), o (b) que la Base de datos corrija el correo de la cuenta en Supabase Auth a `astronaut@eden.space` y se actualice `CUENTAS_DEMO.local.txt`. Recomiendo (b) y además (a).
+- Menor: la tarjeta "03 · Dehydrated Powder" del Natural Consumption Protocol no dice "next step" (la ISS no tiene deshidratador para cultivos).
