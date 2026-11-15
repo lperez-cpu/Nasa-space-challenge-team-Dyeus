@@ -202,9 +202,21 @@ export default function DispenserView({
       {/* Multi-Species Seed Pod Selector */}
       {podOptions.length > 0 && (
         <div>
-          <p className="mb-2.5 font-mono text-xs font-bold tracking-wider text-slate-500 uppercase">
-            Select Seed Pod from Vault ({remainingCount} ready for extraction)
-          </p>
+          <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+            <p className="font-mono text-xs font-bold tracking-wider text-slate-500 uppercase">
+              Select Seed Pod from Vault ({remainingCount} ready for extraction)
+            </p>
+            <div className="flex items-center gap-3 font-mono text-[11px] font-semibold">
+              <span className="flex items-center gap-1.5 text-emerald-700">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Available
+              </span>
+              <span className="flex items-center gap-1.5 text-red-700">
+                <span className="h-2 w-2 rounded-full bg-red-500" />
+                Unavailable
+              </span>
+            </div>
+          </div>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {podOptions.map((pod) => {
               const isSelected = selectedPod?.id === pod.id;
@@ -214,12 +226,14 @@ export default function DispenserView({
                   type="button"
                   onClick={() => handleSelectPod(pod.id)}
                   disabled={phase === 'dispensing'}
-                  className={`flex cursor-pointer flex-col items-start gap-1.5 rounded-lg border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-[#E14D2A] disabled:cursor-not-allowed ${
-                    isSelected
-                      ? 'border-[#E14D2A] bg-[#E14D2A]/5'
-                      : pod.isExtracted
-                        ? 'border-slate-200 bg-slate-50 opacity-65 hover:opacity-90'
-                        : 'border-slate-200 bg-[#F8FAFC] hover:border-slate-300'
+                  className={`flex cursor-pointer flex-col items-start gap-1.5 rounded-lg p-3 text-left transition-all focus-visible:outline-2 focus-visible:outline-[#E14D2A] disabled:cursor-not-allowed ${
+                    pod.isExtracted
+                      ? isSelected
+                        ? 'border-2 border-red-500 bg-red-50/90 shadow-xs'
+                        : 'border border-red-400 bg-red-50/50 hover:border-red-500'
+                      : isSelected
+                        ? 'border-2 border-emerald-600 bg-emerald-50/80 shadow-xs'
+                        : 'border border-emerald-400 bg-emerald-50/35 hover:border-emerald-600'
                   }`}
                 >
                   <div className="flex w-full items-center justify-between gap-2">
@@ -229,10 +243,10 @@ export default function DispenserView({
                     <span
                       className={`rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
                         pod.isExtracted
-                          ? 'border-slate-300 bg-slate-200 text-slate-700'
+                          ? 'border-red-300 bg-red-100 text-red-800'
                           : pod.isRecommended
-                            ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                            : 'border-sky-300 bg-sky-50 text-sky-800'
+                            ? 'border-emerald-300 bg-emerald-100 text-emerald-900'
+                            : 'border-emerald-300 bg-emerald-50 text-emerald-800'
                       }`}
                     >
                       {pod.isExtracted ? 'EXTRACTED' : pod.isRecommended ? 'RECOMMENDED' : 'READY'}
@@ -240,7 +254,7 @@ export default function DispenserView({
                   </div>
                   <span className="text-sm font-semibold text-[#0F172A]">{pod.plant}</span>
                   {pod.slot && (
-                    <span className="font-mono text-[11px] text-slate-500">Slot {pod.slot}</span>
+                    <span className="font-mono text-[11px] text-slate-600">Slot {pod.slot}</span>
                   )}
                 </button>
               );
@@ -252,10 +266,10 @@ export default function DispenserView({
       {/* Selected Seed Pod Summary + Anatomy */}
       {selectedPod ? (
         <div
-          className={`rounded-lg border p-5 ${
+          className={`rounded-lg border-2 p-5 ${
             selectedPod.isExtracted
-              ? 'border-slate-200 bg-slate-50'
-              : 'border-emerald-200 bg-emerald-50/60'
+              ? 'border-red-400 bg-red-50/50'
+              : 'border-emerald-500 bg-emerald-50/60'
           }`}
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -263,8 +277,8 @@ export default function DispenserView({
               <span
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border bg-white ${
                   selectedPod.isExtracted
-                    ? 'border-slate-200 text-slate-500'
-                    : 'border-emerald-200 text-emerald-700'
+                    ? 'border-red-300 text-red-600'
+                    : 'border-emerald-300 text-emerald-700'
                 }`}
               >
                 {selectedPod.isExtracted ? (
@@ -276,7 +290,7 @@ export default function DispenserView({
               <div>
                 <p
                   className={`font-mono text-xs font-bold tracking-wider uppercase ${
-                    selectedPod.isExtracted ? 'text-slate-600' : 'text-emerald-800'
+                    selectedPod.isExtracted ? 'text-red-700' : 'text-emerald-800'
                   }`}
                 >
                   {selectedPod.isExtracted
