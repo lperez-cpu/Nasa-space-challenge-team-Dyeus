@@ -15,56 +15,41 @@ export default function PlantStatusView({
 }) {
   const allDispenses = [...localDispensed, ...(dispenseHistory || [])];
 
-  // Build active cultivation bays from dispensed cartridges or active prescriptions
-  const activeCultures =
-    allDispenses.length > 0
-      ? allDispenses.map((entry, idx) => {
-          const cart =
-            seedVault.find((c) => c.id === entry.cartridge_id) ||
-            seedVault.find((c) => c.status === 'approved');
-          const plantName = entry.plant || cart?.plant || prescriptions[0]?.plant || 'Ashwagandha';
-          const plantInfo =
-            prescriptions.find((p) => p.plant?.toLowerCase() === plantName.toLowerCase()) ||
-            prescriptions[0];
-          const totalDays = plantInfo?.harvestDays || 21;
-          const msElapsed = entry.dispensed_at
-            ? Math.max(0, Date.now() - new Date(entry.dispensed_at).getTime())
-            : 0;
-          const elapsedDays = entry.isLocal
-            ? 1
-            : Math.min(totalDays, Math.max(1, Math.floor(msElapsed / 86400000) + 1));
-          const progressPct = Math.round((elapsedDays / totalDays) * 100);
+  // Build active cultivation bays strictly from real/session dispense entries
+  const activeCultures = allDispenses.map((entry, idx) => {
+    const cart = seedVault.find((c) => c.id === entry.cartridge_id);
+    const plantName = entry.plant || cart?.plant || '—';
+    const plantInfo = prescriptions.find(
+      (p) => p.plant?.toLowerCase() === plantName.toLowerCase(),
+    );
+    const totalDays = plantInfo?.harvestDays || 21;
+    const msElapsed = entry.dispensed_at
+      ? Math.max(0, Date.now() - new Date(entry.dispensed_at).getTime())
+      : 0;
+    const elapsedDays = entry.isLocal
+      ? 1
+      : Math.min(totalDays, Math.max(1, Math.floor(msElapsed / 86400000) + 1));
+    const progressPct = Math.round((elapsedDays / totalDays) * 100);
 
-          return {
-            key: entry.id || `${entry.cartridge_id}-${idx}`,
-            plant: plantName,
-            latin: plantInfo?.latin || 'Withania somnifera',
-            cartridge: cart?.cartridge || entry.cartridge_id || 'Bay A-01',
-            stage: elapsedDays <= 2 ? 'GERMINATION' : elapsedDays < totalDays ? 'VEGETATIVE GROWTH' : 'READY FOR HARVEST',
-            elapsedDays,
-            totalDays,
-            progressPct,
-            timestamp: entry.dispensed_at
-              ? new Date(entry.dispensed_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
-              : 'JUST NOW',
-          };
-        })
-      : prescriptions.map((rx, idx) => {
-          const totalDays = rx.harvestDays || 21;
-          const elapsedDays = idx === 0 ? Math.round(totalDays * 0.45) : Math.round(totalDays * 0.25);
-          const progressPct = Math.round((elapsedDays / totalDays) * 100);
-          return {
-            key: rx.id,
-            plant: rx.plant,
-            latin: rx.latin,
-            cartridge: idx === 0 ? 'Bay A-01' : 'Bay A-02',
-            stage: 'VEGETATIVE GROWTH',
-            elapsedDays,
-            totalDays,
-            progressPct,
-            timestamp: 'ACTIVE CYCLE',
-          };
-        });
+    return {
+      key: entry.id || `${entry.cartridge_id}-${idx}`,
+      plant: plantName,
+      latin: plantInfo?.latin || null,
+      cartridge: cart?.cartridge || entry.cartridge_id || '—',
+      stage:
+        elapsedDays <= 2
+          ? 'GERMINATION'
+          : elapsedDays < totalDays
+            ? 'VEGETATIVE GROWTH'
+            : 'READY FOR HARVEST',
+      elapsedDays,
+      totalDays,
+      progressPct,
+      timestamp: entry.dispensed_at
+        ? new Date(entry.dispensed_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
+        : 'JUST NOW',
+    };
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -117,7 +102,7 @@ export default function PlantStatusView({
                     </p>
                   </div>
                 </div>
-                <span className="rounded border border-emerald-500/35 bg-emerald-950/35 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-300">
+                <span className="rounded border border-amber-500/35 bg-amber-950/35 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-200">
                   {m.status}
                 </span>
               </div>
@@ -126,46 +111,55 @@ export default function PlantStatusView({
         </div>
 
         {/* Active Plant Progress Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {activeCultures.map((item) => (
-            <article
-              key={item.key}
-              className="flex flex-col justify-between gap-4 rounded-xl border border-slate-800 bg-[#080D17] p-5"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-100">{item.plant}</h3>
-                    <p className="text-xs italic text-slate-400">{item.latin}</p>
-                  </div>
-                  <span className="rounded-md border border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-300">
-                    {item.stage}
-                  </span>
-                </div>
-
-                <div className="mt-4">
-                  <div className="mb-1.5 flex items-center justify-between font-mono text-xs">
-                    <span className="text-slate-400">GROWTH PROGRESS</span>
-                    <span className="font-bold text-sky-300 tabular-nums">
-                      DAY {item.elapsedDays} / {item.totalDays} ({item.progressPct}%)
+        {activeCultures.length === 0 ? (
+          <div className="rounded-xl border border-slate-800 bg-[#080D17] p-5 text-sm text-slate-400">
+            No cartridges currently in cultivation. Dispense an authorized cartridge from the{' '}
+            <strong className="text-slate-200">Dispenser</strong> module to initiate a hydroponic cycle.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {activeCultures.map((item) => (
+              <article
+                key={item.key}
+                className="flex flex-col justify-between gap-4 rounded-xl border border-slate-800 bg-[#080D17] p-5"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-100">{item.plant}</h3>
+                      {item.latin && (
+                        <p className="text-xs italic text-slate-400">{item.latin}</p>
+                      )}
+                    </div>
+                    <span className="rounded-md border border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-300">
+                      {item.stage}
                     </span>
                   </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400"
-                      style={{ width: `${item.progressPct}%` }}
-                    />
+
+                  <div className="mt-4">
+                    <div className="mb-1.5 flex items-center justify-between font-mono text-xs">
+                      <span className="text-slate-400">GROWTH PROGRESS</span>
+                      <span className="font-bold text-sky-300 tabular-nums">
+                        DAY {item.elapsedDays} / {item.totalDays} ({item.progressPct}%)
+                      </span>
+                    </div>
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400"
+                        style={{ width: `${item.progressPct}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between border-t border-slate-800 pt-3 font-mono text-[11px] text-slate-400">
-                <span>UNIT: {item.cartridge}</span>
-                <span className="tabular-nums">{item.timestamp}</span>
-              </div>
-            </article>
-          ))}
-        </div>
+                <div className="flex items-center justify-between border-t border-slate-800 pt-3 font-mono text-[11px] text-slate-400">
+                  <span>UNIT: {item.cartridge}</span>
+                  <span className="tabular-nums">{item.timestamp}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 2. Full Botanical Catalog from Backend (`plants` table) */}

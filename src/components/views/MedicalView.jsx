@@ -157,18 +157,17 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                 </div>
 
                 <div className="flex flex-col gap-2.5 border-t border-slate-800 pt-3.5">
-                  {rx.evidence && (
-                    <div
-                      className={`flex items-center gap-2 font-mono text-[11px] ${
-                        rx.nasaBacked ? 'text-emerald-300' : 'text-slate-400'
-                      }`}
-                    >
-                      <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                      <span>
-                        {rx.nasaBacked ? 'NASA BACKED' : 'NOT FLIGHT-VALIDATED · CLINICAL EVIDENCE'} · {rx.evidence}
-                      </span>
-                    </div>
-                  )}
+                  <div
+                    className={`flex items-center gap-2 font-mono text-[11px] ${
+                      rx.nasaBacked ? 'text-emerald-300' : 'text-amber-200'
+                    }`}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {rx.nasaBacked ? 'NASA BACKED' : 'NOT FLIGHT-VALIDATED · CLINICAL EVIDENCE'}
+                      {rx.evidence ? ` · ${rx.evidence}` : ''}
+                    </span>
+                  </div>
 
                   <div className="flex items-center justify-between font-mono text-xs">
                     <span className="text-slate-500">HARVEST TIME</span>

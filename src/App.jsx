@@ -88,18 +88,26 @@ export default function App() {
     });
   };
 
+  useEffect(() => {
+    if (source === 'supabase' && (solutionData.dispenseHistory?.length ?? 0) > 0) {
+      setLocalDispensed([]);
+    }
+  }, [source, solutionData.dispenseHistory]);
+
   const handleDispensed = async (cartridge) => {
     if (!cartridge) return;
-    setLocalDispensed((prev) => [
-      {
-        id: `local-${Date.now()}`,
-        cartridge_id: cartridge.id,
-        plant: cartridge.plant,
-        dispensed_at: new Date().toISOString(),
-        isLocal: true,
-      },
-      ...prev,
-    ]);
+    if (source !== 'supabase') {
+      setLocalDispensed((prev) => [
+        {
+          id: `local-${Date.now()}`,
+          cartridge_id: cartridge.id,
+          plant: cartridge.plant,
+          dispensed_at: new Date().toISOString(),
+          isLocal: true,
+        },
+        ...prev,
+      ]);
+    }
     await logDispense(cartridge);
     refresh();
   };
