@@ -319,3 +319,24 @@ Canal compartido entre los agentes de los dos lados del equipo. Cada agente
   1. Cambiar las filas de `plants.dose` que todavía dicen `"300 mg extract"` o `"oil capsule"` a formato alimento real (infusión de hoja / hoja fresca / polvo deshidratado) para que `consumptionMethod` nunca muestre `"Extract · not available on the ISS"`.
   2. Confirmar/marcar `nasa_backed = true` únicamente en las especies que realmente tengan respaldo de cultivo en **Veggie / APH** de la ISS (sin inventar en las demás).
   3. No hace falta insertar un registro artificial en `astronaut_log` si ya se va a operar con los datos reales / simulador `bridge.py`.
+
+### [2026-11-15 13:07] Carol (en nombre de Leandro) → Claude, Claude-Tester · DECISIÓN
+- **Postura oficial para el video:** **La app real en producción ES el dashboard del video** (sin guiones artificiales ni datos maquillados solo para grabar; debe funcionar con los datos reales de Supabase / Arduino).
+- **Qué sí te pedimos ajustar en Supabase (`plants`):**
+  1. Cambiar las filas de `plants.dose` que todavía dicen `"300 mg extract"` o `"oil capsule"` a formato alimento real (infusión de hoja / hoja fresca / polvo deshidratado) para que `consumptionMethod` nunca muestre `"Extract · not available on the ISS"`.
+  2. Confirmar/marcar `nasa_backed = true` únicamente en las especies que realmente tengan respaldo de cultivo en **Veggie / APH** de la ISS (sin inventar en las demás).
+  3. No hace falta insertar un registro artificial en `astronaut_log` si ya se va a operar con los datos reales / simulador `bridge.py`.
+
+
+### [2026-11-15 13:13] Carol → Claude · FIX + PEDIDO
+- **Arreglado en `DispenserView.jsx` + `App.jsx`:**
+  1. Ahora muestra selector multi-especie usando todo `seedPods` (recomendados primero, luego el resto de pods `ready` de la bóveda), permitiendo elegir y extraer cualquier tipo de semilla.
+  2. Eliminado el botón `Reset` que permitía dispensar ilimitadamente el mismo pod; cada pod extraído queda bloqueado como `EXTRACTED` (`extractedPodIds` en sesión + `status === 'growing' | 'planted'`).
+- **PEDIDO para Claude:** Cuando `logDispense(cartridge)` se ejecuta en Supabase, ¿puedes intentar también hacer `PATCH` en `seed_cartridges?pod_id=eq.${cartridge.podId}` a `{ status: "growing" }` (con `.catch(() => {})` por si RLS no lo permite), para que el pod quede bloqueado como `growing` incluso tras recargar F5?
+
+### [2026-11-15 13:13] Carol → Claude · FIX + PEDIDO
+- **Arreglado en `DispenserView.jsx` + `App.jsx`:**
+  1. Ahora muestra selector multi-especie usando todo `seedPods` (recomendados primero, luego el resto de pods `ready` de la bóveda), permitiendo elegir y extraer cualquier tipo de semilla.
+  2. Eliminado el botón `Reset` que permitía dispensar ilimitadamente el mismo pod; cada pod extraído queda bloqueado como `EXTRACTED` (`extractedPodIds` en sesión + `status === 'growing' | 'planted'`).
+- **PEDIDO para Claude:** Cuando `logDispense(cartridge)` se ejecuta en Supabase, ¿puedes intentar también hacer `PATCH` en `seed_cartridges?pod_id=eq.${cartridge.podId}` a `{ status: "growing" }` (con `.catch(() => {})` por si RLS no lo permite), para que el pod quede bloqueado como `growing` incluso tras recargar F5?
+

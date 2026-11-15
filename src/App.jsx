@@ -34,6 +34,7 @@ export default function App() {
 
   const [activeView, setActiveView] = useState('astronaut');
   const [localDispensed, setLocalDispensed] = useState([]);
+  const [extractedPodIds, setExtractedPodIds] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -96,6 +97,10 @@ export default function App() {
 
   const handleDispensed = async (cartridge) => {
     if (!cartridge) return;
+    const podKey = cartridge.podId || cartridge.id;
+    if (podKey) {
+      setExtractedPodIds((prev) => (prev.includes(podKey) ? prev : [...prev, podKey]));
+    }
     if (source !== 'supabase') {
       setLocalDispensed((prev) => [
         {
@@ -209,6 +214,10 @@ export default function App() {
               crew={syncedSolutionData.crew}
               prescriptions={syncedSolutionData.prescriptions}
               seedVault={syncedSolutionData.seedVault}
+              seedPods={syncedSolutionData.seedPods || []}
+              dispenseHistory={syncedSolutionData.dispenseHistory || []}
+              localDispensed={localDispensed}
+              extractedPodIds={extractedPodIds}
               onDispensed={handleDispensed}
             />
           )}
