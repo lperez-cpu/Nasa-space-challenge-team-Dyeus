@@ -96,6 +96,20 @@ export function AuthProvider({ children }) {
     return api.submitAccessRequest(payload);
   }, []);
 
+  const signUpCrew = useCallback(async ({ full_name, email, password }) => {
+    if (typeof api.signUpCrew !== 'function') {
+      throw new Error('User registration (`signUpCrew`) is pending sync in src/data/api.js.');
+    }
+    const result = await api.signUpCrew({ full_name, email, password });
+    if (result?.user && result?.session) {
+      setUser(result.user);
+      setProfile(result.profile ?? { id: result.user.id, role: 'paciente', full_name });
+    }
+    return result;
+  }, []);
+
+  const hasSignUp = typeof api.signUpCrew === 'function';
+
   const activeRole = profile?.role || 'paciente';
   const isAuthenticated = Boolean(user);
   const displayName = profile?.full_name || user?.email || 'Authenticated Crew';
@@ -109,8 +123,10 @@ export function AuthProvider({ children }) {
         displayName,
         isAuthenticated,
         hasBackendAuth,
+        hasSignUp,
         loading,
         signIn,
+        signUpCrew,
         signOut,
         submitAccessRequest,
         refreshAuth: syncSession,

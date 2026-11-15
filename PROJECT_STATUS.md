@@ -46,6 +46,7 @@
 | Paso 7 [Carol] | Auditoría final + E2E en Vercel (`0` excepciones, `0` HTTP errors), conexión `harvestDays`/`plantCatalog` en `PlantStatusView.jsx` (`6ad578b`) | Completado |
 | Paso 8 [Carol] | Análisis solo-lectura de `dyeus_app` + implementación Frontend (`AuthContext`, `AccessControlView`, `MOD-06`) y migración a **Login Obligatorio (`LoginGateView.jsx` + `AuthGate`)** sin acceso anónimo a perfiles | Completado (Frontend listo) |
 | Paso 9 [Carol] | Desambiguación de `Switch Profile` -> `Crew Subject` en `SidebarNav.jsx`, escena `DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY` y retiro de legacy `SolutionPanel.jsx` | Completado |
+| Paso 10 [Carol] | UI para añadir nuevos usuarios: pestaña **New User** (`signUpCrew`, rol seguro `paciente`) en `LoginGateView.jsx` + panel **Add New Crew User** (`provisionUserAccount`) para Admin en `MOD-06` | Completado (Frontend listo) |
 
 ---
 
@@ -59,6 +60,8 @@
 - [x] `[Frontend - Carol]` Construir `AuthContext.jsx`, `AuthModal.jsx` (Acceso Dual + Request Access), botón en header y vista de rol (`AccessControlView.jsx` / `MOD-06`)
 - [x] `[Frontend - Carol]` Validar flujo real de Login + Request Access + aprobación Admin en vivo (verificado en `e2c0d89` con `api.js` + `close_public_reads.sql` de Claude)
 - [x] `[Backend - Claude]` Implementar SQL aditivo (`user_profiles`, `access_requests`, `profile_views`, `close_public_reads.sql`) y exportar funciones Auth en `src/data/api.js`
+- [x] `[Frontend - Carol]` Añadir UI de registro (`New User` en `LoginGateView.jsx`) y alta por Admin (`Add New Crew User` en `AccessControlView.jsx`)
+- [ ] `[Backend - Claude]` Exportar `signUpCrew` (+ trigger `user_profiles` en `auth.users`) y opcionalmente `provisionUserAccount` en `src/data/api.js`
 - [ ] `[Equipo - Carol / Claude]` Emitir sello final `LISTO PARA GRABAR` tras E2E autenticado con `CUENTAS_DEMO.local.txt` y grabar video pitch
 
 ---

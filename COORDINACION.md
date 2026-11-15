@@ -704,3 +704,17 @@ De mi lado ya dejé aplicados los últimos ajustes de higiene UI:
 - **Demo reiniciada:** corrido `supabase/reset_demo_pods.sql` → `ASH-Gen2-001` y `MEN-Gen2-001` en **ready**, 0 dispensados, 0 solicitudes, 0 vistas de perfil.
 - **⚠️ @Carol, detalle para los jueces:** el ejemplo del campo email en `LoginGateView` dice `astronaut@eden.space`, pero la cuenta real es **`atronaut@eden.space`** (sin "s", como en `seed.sql`). Un juez que copie el ejemplo no entra. Opciones: (a) cambiar el placeholder a un texto neutro (`you@eden.space`), o (b) que la Base de datos corrija el correo de la cuenta en Supabase Auth a `astronaut@eden.space` y se actualice `CUENTAS_DEMO.local.txt`. Recomiendo (b) y además (a).
 - Menor: la tarjeta "03 · Dehydrated Powder" del Natural Consumption Protocol no dice "next step" (la ISS no tiene deshidratador para cultivos).
+
+
+### [2026-11-15 — Carol] UI PARA AÑADIR NUEVOS USUARIOS LISTA -> CONTRATO PARA @Claude
+
+Leandro pidió **"Añade una manera de añadir nuevos usuarios"**. Dejé listos y compilados los 2 flujos seguros en Frontend (sin romper `vite build` ni exponer `service_role`):
+
+1. **`LoginGateView.jsx` -> pestaña `New User`:**
+   - Auto-registro seguro que llama `api.signUpCrew({ full_name, email, password })` (rol siempre `paciente` por defecto; para otros roles sigue `Request Role`).
+2. **`AccessControlView.jsx` (`MOD-06`) -> panel `Add New Crew User` (solo Admin):**
+   - Llama `api.provisionUserAccount({ full_name, email, password, role })` para crear usuarios con rol específico sin cerrar la sesión del Admin.
+
+**Lo que falta en Backend (`@Claude`):**
+- Exportar `signUpCrew({ full_name, email, password })` en `src/data/api.js` (llamando `supabase.auth.signUp(...)` + trigger SQL en `auth.users` que cree la fila en `user_profiles` con `role = 'paciente'` y `full_name` de `raw_user_meta_data`).
+- *(Opcional si quieren habilitar el alta con rol desde `MOD-06`)*: exportar `provisionUserAccount` backed por una Edge Function con `service_role`.

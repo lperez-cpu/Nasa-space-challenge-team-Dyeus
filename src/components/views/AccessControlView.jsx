@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, RefreshCw, ShieldCheck, Users, X } from 'lucide-react';
+import { Check, RefreshCw, ShieldCheck, UserPlus, Users, X } from 'lucide-react';
 import * as api from '../../data/api';
-import { useAuth } from '../../context/AuthContext';
+import { MISSION_ROLES, useAuth } from '../../context/AuthContext';
 
 export default function AccessControlView() {
   const { activeRole, isAuthenticated } = useAuth();
@@ -11,8 +11,16 @@ export default function AccessControlView() {
   const [actionId, setActionId] = useState(null);
   const [notice, setNotice] = useState(null);
 
+  // Admin: Add New User form
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState('paciente');
+  const [creating, setCreating] = useState(false);
+
   const hasRequestsApi = typeof api.getAccessRequests === 'function';
   const hasProfilesApi = typeof api.getUserProfiles === 'function';
+  const hasProvisionApi = typeof api.provisionUserAccount === 'function';
   const canApprove = activeRole === 'admin';
 
   const loadData = useCallback(async () => {
@@ -46,6 +54,31 @@ export default function AccessControlView() {
       setNotice(err?.message || 'Unable to update request status.');
     } finally {
       setActionId(null);
+    }
+  }
+
+  async function handleCreateUser(e) {
+    e.preventDefault();
+    if (!hasProvisionApi) return;
+    setNotice(null);
+    setCreating(true);
+    try {
+      await api.provisionUserAccount({
+        full_name: newName.trim(),
+        email: newEmail.trim(),
+        password: newPassword,
+        role: newRole,
+      });
+      setNewName('');
+      setNewEmail('');
+      setNewPassword('');
+      setNewRole('paciente');
+      setNotice('New user account created and assigned to crew directory.');
+      await loadData();
+    } catch (err) {
+      setNotice(err?.message || 'Unable to provision new user.');
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -169,6 +202,99 @@ export default function AccessControlView() {
           </div>
         )}
       </section>
+
+      {/* Admin: Provision New User */}
+      {canApprove && (
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-[#E14D2A]" />
+              <h3 className="text-sm font-bold text-[#0F172A]">Add New Crew User</h3>
+            </div>
+            <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-700 uppercase">
+              ADMIN ONLY
+            </span>
+          </div>
+
+          {!hasProvisionApi && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 font-mono text-[11px] text-amber-900">
+              Admin provisioning (`provisionUserAccount`) pending backend Edge Function / endpoint in `src/data/api.js`.
+            </div>
+          )}
+
+          <form onSubmit={handleCreateUser} className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Dr. Elena Rostova"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-[#0F172A] focus:border-[#E14D2A] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+                Email
+              </label>
+              <input
+                type="email"
+                required
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="elena@eden.space"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-[#0F172A] focus:border-[#E14D2A] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+                Temporary Password
+              </label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-[#0F172A] focus:border-[#E14D2A] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+                Assigned Role
+              </label>
+              <select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-[#0F172A] focus:border-[#E14D2A] focus:outline-none"
+              >
+                {MISSION_ROLES.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.label} ({r.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={creating || !hasProvisionApi}
+                className="cursor-pointer rounded-lg bg-[#0F172A] px-4 py-2 font-mono text-xs font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {creating ? 'Creating User...' : 'Create Crew User'}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {/* Crew Profiles */}
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
