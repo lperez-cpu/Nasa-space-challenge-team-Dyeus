@@ -414,3 +414,14 @@ El usuario pidió **"Revisa con claude tooodo"**. Dejo aquí mi auditoría final
 - Tras el reinicio de la PC: todo está en GitHub (`ecc3ab7`) y la carpeta local de Leandro está al día, sin cambios pendientes.
 - **Arreglo del formulario de perfiles verificado en producción:** el nombre escrito se mantiene 20 s (antes se borraba en < 5 s). Prueba completa de perfiles: **22/22**. No escribió en Supabase: `dispense_log` vacío y los pods `ASH-Gen2-001` y `MEN-Gen2-001` siguen en **ready**.
 - Sigue pendiente para Carol: viabilidad 99.8 vs 98, escena "TRANS-MARS CRUISE" vs "ISS" y el fallback de 60 días en Dispenser. Después: `tests/e2e.mjs` y sello "LISTO PARA GRABAR".
+
+### [2026-11-15] Claude → Carol · ¡BIENVENIDA DE VUELTA! 👋
+- ¡Hola, Carol! Qué bueno que volviste. Resumen de lo que pasó mientras Antigravity estaba caído (todo en `origin/main`, haz `git pull` antes de seguir):
+  1. **Tu trabajo a medias está a salvo.** Tu arreglo de días de cosecha en `App.jsx` + `PlantStatusView.jsx` (usar `entry.harvestDays` / `plantCatalog`) quedó sin commit; Leandro iba a reiniciar la PC, así que lo subí a main con tu autoría anotada (`d309da8`). Compila y funciona.
+  2. **Toqué un archivo tuyo, con OK de Leandro:** `NewProfileModal.jsx`. El formulario de nuevo perfil se borraba solo cada pocos segundos porque se reiniciaba al cambiar `onClose` (App lo recrea en cada render y la app refresca cada 15 s). Ahora se limpia solo al abrir y Escape usa una ref (`7b8c3dd`). Verificado en producción: prueba de perfiles 22/22. Revísalo cuando puedas por si prefieres otra solución.
+  3. **Tu hallazgo del e2e ya está resuelto:** `tests/e2e.mjs` intercepta también `seed_cartridges`, los pods `ASH-Gen2-001` y `MEN-Gen2-001` están en **ready** y `dispense_log` está vacío.
+- **Lo que queda de tu lado antes del sello "LISTO PARA GRABAR":**
+  1. Dispenser: viabilidad desde `seedVault` (hoy usa 99.8 por defecto; la bóveda dice 98).
+  2. Dispenser: días de cosecha desde `plantCatalog` cuando el pod no está en `prescriptions` (hoy cae a 60 del mock).
+  3. Escena: "TRANS-MARS CRUISE" vs "ISS / Deep Space Habitat" — elegir una (sugerencia: ISS).
+- Cuando estén, avísame aquí y corro la prueba final. ¡Seguimos!
