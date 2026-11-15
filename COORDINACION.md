@@ -776,3 +776,50 @@ Leandro pidió **"Añade una manera de añadir nuevos usuarios"**. Dejé listos 
 - **Placeholder `you@eden.space`** ✅ · **badge `Next step` en 03 · Dehydrated Powder** ✅.
 
 **Estado de mi parte (tareas 1–2 del plan):** `signUpCrew`, `provisionUserAccount`, `supabase/signup_trigger.sql` y la Edge Function `provision-user` están **escritos y compilan, pero NO se publicaron**. Faltan el trigger, el ajuste de Auth (autoconfirm + `site_url` → Vercel) y el despliegue de la función, y para eso necesito el OK del usuario para escribir en Supabase. No subo `api.js` antes que el trigger: si no, New User aparecería y crearía cuentas sin rol. Mientras tanto, tu UI mantiene ocultos New User y Add New Crew User, así que **la demo de hoy está lista para grabar tal como está**.
+
+
+### [2026-11-15 — Claude] SEGURIDAD + FUNCIONALIDAD + VIABILIDAD + BACKUPS: mi parte publicada → tareas para @Carol
+
+El usuario aprobó el plan completo, incluidas las escrituras en Supabase. Todo lo que sigue está **aplicado y probado contra la base real**; las cuentas y filas de prueba se borraron (quedan las 4 cuentas demo).
+
+**Seguridad**
+- `supabase/security_hardening.sql` (aplicado):
+  - Sin sesión ya **no** se pueden extraer pods ni escribir `dispense_log` (era un hueco mío).
+  - Sin sesión, `astronaut_log` solo acepta lecturas **sin dueño**, que es lo que manda el puente del Arduino. Antes cualquiera podía inyectar registros de salud falsos a nombre de un astronauta.
+  - Una cuenta sin rol no ve ni extrae nada.
+  - `anon` perdió los privilegios de escritura que no usa, y nadie tiene `TRUNCATE`.
+- `vercel.json`: CSP estricta (scripts solo del propio sitio, red solo a Supabase, fuentes de Google) + `X-Frame-Options DENY`, `nosniff`, `Referrer-Policy` y `Permissions-Policy`. Lo probé en local sirviendo la build con esos headers: e2e 0 errores. Además verifiqué que el e2e **sí** detecta violaciones de CSP (control negativo con una CSP rota).
+  - ⚠️ **@Carol:** si agregás imágenes, fuentes o scripts de otro dominio, el navegador los va a bloquear. Avisame y lo agrego a `vercel.json`.
+- `tests/rls.mjs`: **20/20**. Intenta los ataques (extraer sin sesión, inyectar lecturas, darse admin, aprobar solicitudes…) y exige que RLS los rechace.
+
+**Funcionalidad (en `api.js`, publicado)**
+- `signUpCrew({ full_name, email, password })` → `{ user, profile, session }`. Entra al instante (autoconfirm activado, `site_url` → Vercel). El rol es siempre `paciente`: el trigger `handle_new_user` ignora cualquier rol que mande el cliente. Si el correo está repetido: "This email already has an account. Use Sign In."
+- `provisionUserAccount({ full_name, email, password, role })` → `{ user, profile }`. Usa la Edge Function `provision-user` (desplegada, `verify_jwt`). Solo admin; un paciente recibe "Only an admin can create crew accounts."
+  - **Con esto aparecen solas tu pestaña New User y tu panel Add New Crew User.** Probadas 10/10 por HTTP y 9/9 con el `api.js` real.
+- **Nuevas para la vista Doctor y el gráfico:**
+  - `getCrewPatients()` → `[{ id, full_name, created_at, lastReading, daysInSpace, alerts }]`. Doctor y admin reciben toda la tripulación; un paciente, solo su fila.
+  - `getPatientRecord(patientId, { limit })` → `{ profile, latest, alerts, history }`. **Registra la vista en `profile_views` automáticamente** (auditoría).
+  - `getVitalsHistory({ patientId, limit })` → `[{ id, at, day, heartRate, sleepQuality, energy, mood, levels: { stress, inflammation, cognitive, cardiovascular, nutrition }, alerts }]`, en orden cronológico. Los niveles van como 0 normal, 1 moderado, 2 alto. Sin `patientId` usa el astronauta que muestra la dashboard.
+  - Hoy el astronauta demo tiene **solo 2 registros** (HR 70→103). Le consulté al usuario si cargamos un historial demo para que el gráfico tenga forma.
+
+**Viabilidad y etiquetas**
+- README con secciones nuevas: **Security model** (tabla por rol, verificada contra las políticas reales), **New users**, **Feasibility** (solo hechos NASA citables + tabla de qué es real y qué está modelado + límites), **Backups** y **Tests**.
+- Corregí dos afirmaciones exageradas del README:
+  - Bio-Monitor es de la **CSA** y EveryWear de **CNES** (no "NASA devices"). En `DATA_SOURCES` los nombres ahora dicen `Bio-Monitor (CSA · Astroskin smart shirt)` y `EveryWear app (CNES · crew self-report)`. El texto es un poco más largo: revisá que no se corte.
+  - "DNA-verified": en realidad es un **modelo por dosis**, no una medición de ADN.
+
+**Backups**
+- `supabase/backup.mjs` exporta tablas, políticas, triggers y funciones a `backups/<fecha>/`, que está en `.gitignore` porque tiene datos de salud. Ya hay un backup tomado.
+- `--restore-sql` genera un `restore.sql` que reinserta las filas faltantes. Lo probé borrando una fila y restaurándola dentro de una transacción con rollback (13→13).
+
+**Tareas para @Carol (tus archivos):**
+
+| # | Tarea | Archivo |
+| --- | --- | --- |
+| A | **Vista Doctor multipaciente:** lista con `getCrewPatients()` (alertas y día en el espacio) → ficha con `getPatientRecord(id)` (alertas + historial). Solo para doctor/admin. | `views/` + `App.jsx` |
+| B | **Gráfico de tendencia** en Astronaut Data con `getVitalsHistory()` (HR, sueño, energía; niveles 0/1/2) | `AstronautView.jsx` |
+| C | **Tarjeta de viabilidad** en Dispenser o Plant Status: "No new flight hardware: Veggie (ISS since 2014) + galley hot water · crops already eaten in space (lettuce 2015, chile peppers 2021)". Usá solo los hechos de la sección Feasibility del README. | `DispenserView.jsx` o `PlantStatusView.jsx` |
+| D | **Etiquetas de datos modelados:** `api.js` ya manda `viabilitySimulated` y `podSimulated`, pero la UI no los muestra. Mostrar un badge "modeled" junto a la viabilidad %, y cambiar "DNA VERIFIED (AUTHORIZED)" por algo como "WITHIN DOSE LIMIT (AUTHORIZED)" y "RADIATION DAMAGE" por "OVER DOSE LIMIT" (texto en `mockData.js`) | `InventoryView.jsx`, `DispenserView.jsx`, `mockData.js` |
+| E | **Pedido del usuario: en la pantalla de inicio, una ayuda "¿Cómo creo un usuario nuevo?"** que explique las 3 vías: New User (astronauta al instante), Request Access (otro rol, lo aprueba un admin) y alta por el Admin en Access Control | `LoginGateView.jsx` |
+
+Cuando subas A–E, corro el e2e y `tests/rls.mjs`, saco un backup y vuelvo a dar el sello.
