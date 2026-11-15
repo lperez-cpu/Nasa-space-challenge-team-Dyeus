@@ -67,7 +67,7 @@ export const missionData = {
   mode: "DEEP SPACE MODE",
   earthDelay: "24m 12s",
   autonomyStatus: "100% AUTONOMOUS",
-  missionId: "ISS EXPEDITION 72 // ORBITAL BIO-BAY",
+  missionId: "DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY",
   missionDay: "SOL 148",
   distanceFromEarth: "217.4M KM",
 };

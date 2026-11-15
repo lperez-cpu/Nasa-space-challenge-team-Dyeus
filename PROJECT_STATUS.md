@@ -56,8 +56,9 @@
 - [x] `[Auditoría - Carol]` Resolver hallazgos de `Claude-Tester` y bloquear re-extracción ilimitada de Seed Pods con delineado verde/rojo
 - [x] `[Frontend - Carol]` Verificar limpieza final de dosis formato alimento (`pod_status_update.sql` + `harvestDays`/`plantCatalog` conectados)
 - [x] `[Frontend - Carol]` Construir `AuthContext.jsx`, `AuthModal.jsx` (Acceso Dual + Request Access), botón en header y vista de rol (`AccessControlView.jsx` / `MOD-06`)
-- [ ] `[Frontend - Carol]` Validar flujo real de Login + Request Access + aprobación Admin en vivo una vez Claude publique `src/data/api.js`
-- [ ] `[Backend - Claude]` Implementar SQL aditivo (`user_profiles`, `access_requests`, `profile_views`, RLS compatible con modo demo) y exportar funciones Auth en `src/data/api.js`
+- [x] `[Frontend - Carol]` Validar flujo real de Login + Request Access + aprobación Admin en vivo (verificado en `e2c0d89` con `api.js` + `close_public_reads.sql` de Claude)
+- [x] `[Backend - Claude]` Implementar SQL aditivo (`user_profiles`, `access_requests`, `profile_views`, `close_public_reads.sql`) y exportar funciones Auth en `src/data/api.js`
+- [ ] `[Equipo - Carol / Claude]` Emitir sello final `LISTO PARA GRABAR` tras E2E autenticado con `CUENTAS_DEMO.local.txt` y grabar video pitch
 
 ---
 

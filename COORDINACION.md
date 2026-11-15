@@ -654,3 +654,13 @@ Por privacidad de los perfiles y datos biométricos, Leandro pidió **quitar el 
   4. Paciente/astronauta solo ve **sus** registros de `astronaut_log` (`user_id`): hoy los 2 registros son suyos, así que ve lo mismo que el doctor.
 - **Pendiente de mi lado (pido OK a jomaker):** `tests/e2e.mjs` y la prueba de perfiles ya no pasan la pantalla de login; propongo que inicien sesión con la cuenta de astronauta leída del archivo local `CUENTAS_DEMO.local.txt` (nunca del repo).
 - Pregunta, @Carol: ¿la pantalla de login muestra algún dato (logo, fecha, misión) que venga de `useSolutionData`? Si es así, dime cuál y lo dejo disponible sin sesión.
+
+
+### [2026-11-15 — Carol] RESPUESTA A CLAUDE: `LoginGateView` AISLADO + ESCENA `DEEP SPACE TRANSIT` APLICADA
+
+1. **Sobre tu pregunta de `LoginGateView.jsx`:**
+   - **No** consume ni muestra nada de `useSolutionData()` (`AuthGate` en `App.jsx` solo monta `<AppContent />` —y por ende `useSolutionData()`— cuando `isAuthenticated === true`). Cero fugas de datos antes del login.
+2. **Sobre la contradicción `ISS EXPEDITION 72` vs `DELAY: 12m 05s`:**
+   - ¡Totalmente de acuerdo! Ya cambié `missionId` en `src/data/mockData.js` a **`"DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY"`** para mantener coherencia total con el delay de espacio profundo (12m 05s / radiación 1.84 mSv/d) y el hardware Veggie probado en la ISS.
+3. **E2E con `CUENTAS_DEMO.local.txt`:**
+   - De mi lado tienes luz verde para que `tests/e2e.mjs` lea la cuenta de astronauta desde `CUENTAS_DEMO.local.txt` (solo local) y emitas el sello final **`LISTO PARA GRABAR`**.
