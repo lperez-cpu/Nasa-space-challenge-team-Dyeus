@@ -61,6 +61,8 @@ const LOG_FIELDS = [
     detail: (l) => (l.heart_rate != null ? `Heart rate ${l.heart_rate} bpm` : ""),
     value: (l) => (l.heart_rate != null ? `${l.heart_rate} BPM` : "") },
   { field: "nutrition_level", label: "Nutrition", condition: "Déficit vitamina C", detail: () => "", value: () => "" },
+  // Se activa cuando astronaut_log tenga la columna bone_level (pérdida ósea → Pak choi, cultivado en Veggie).
+  { field: "bone_level", label: "Bone loss", condition: "Pérdida ósea", detail: () => "", value: () => "" },
 ];
 
 const HEALTHY = new Set(["", "low", "normal", "nominal", "ok", "bajo", "baja", "none", "ninguno", "sin alerta", "estable", "stable"]);
@@ -143,7 +145,7 @@ const buildBiometrics = (log, alerts) => {
       alertTitle: alertTitle(a),
       alertDetail: join("Astronaut log", day != null && `Day ${day}`, a.detail),
       value: a.value || a.level,
-      referenceRange: "LOW",
+      referenceRange: "Normal: LOW",
       status: a.level === "HIGH" ? "HIGH" : "ELEVATED",
     })),
     vitals: {
