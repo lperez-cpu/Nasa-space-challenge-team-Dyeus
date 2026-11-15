@@ -438,3 +438,40 @@ El usuario pidió **"Revisa con claude tooodo"**. Dejo aquí mi auditoría final
    - `npm run build` (`vite build`) -> `exit 0` (`1590 modules`, `dist/assets/index-iAmXlVt7.js` `312.96 kB`).
 
 Quedo atenta cada 3 minutos a `COORDINACION.md` esperando tu confirmación **`LISTO PARA GRABAR`**.
+
+
+---
+
+### [2026-11-15 — Carol] ANÁLISIS + PLAN CONJUNTO: SISTEMA DE PERFILES E INICIO DE SESIÓN (SOLO LECTURA DE `dyeus_app`)
+
+El usuario pidió analizar el sistema de perfiles e inicio de sesión de la carpeta aparte (`dyeus_app CODIGO APARTE NO MESCLAR` — **sin mover ni modificar nada de esa carpeta, y sin mezclar código**) y armar un plan limpio entre **Carol (Frontend)** y **Claude (Backend)** para implementarlo en `PROJECT E.D.E.N.`.
+
+#### 1. Hallazgos al auditar `dyeus_app` (solo lectura)
+- **Bug de esquema en `access_requests`:** `seed.sql` define `(email, requested_role, status)` pero `auth.js` intenta insertar `{ full_name, email, role_requested, reason }`. Falta `full_name`/`reason` y el nombre de columna no coincide (`requested_role` vs `role_requested`).
+- **Selector de rol engañoso en `Login.jsx`:** Los 4 botones de perfil (`paciente`, `doctor`, `programador`, `admin`) solo cambian estado local y `signInWithPassword(email, password)` los ignora por completo.
+- **Peligro si se aplicara su `seed.sql` directo:** Trae `DELETE FROM seed_cartridges; DELETE FROM plants;` (borraría nuestras 8+5 plantas, las dosis formato alimento y los pods actuales) y activa RLS que bloquearía el flujo público actual del pitch/demo. Además en `seed.sql` el correo demo dice `atronaut@eden.space` (typo sin `s`).
+- **Deuda Frontend en `dyeus_app` (que NO vamos a copiar):** `AuthContext.jsx` huérfano/duplicado, `App.jsx` monolítico de 514 líneas, contraste reprobado (`text-black/15`, `#E1E5AC` sobre blanco) y sidebar sin responsive móvil.
+
+#### 2. Plan de Implementación Limpio (División Carol / Claude)
+
+- **Parte de @Claude (Backend: Supabase + `src/data/api.js`):**
+  1. **Auditoría en Supabase:** Confirmar qué tablas/usuarios ya existen en `hoxfsjyixnmknsvunizj` (`user_profiles`, `access_requests`, `profile_views`, `auth.users`).
+  2. **SQL aditivo y seguro (sin `DELETE` de `plants` ni `seed_cartridges`):**
+     - Asegurar `user_profiles` (`id, role, full_name, created_at`) y `get_my_role()` (`SECURITY DEFINER`).
+     - Alinear `access_requests` con columnas `(id, full_name, email, role_requested, reason, status, created_at)` para que coincida 1:1 con el formulario.
+     - Asegurar `profile_views` (`viewer_id, patient_id, viewed_at`).
+     - **Modo compatible con la demo/pitch:** Definir si mantenemos acceso público de lectura/demo cuando no hay sesión y políticas por rol al iniciar sesión (para no romper la URL pública para jueces ni la grabación del video).
+  3. **API en `src/data/api.js`:** Exponer `getSession()`, `onAuthStateChange()`, `signIn(email, password)`, `signOut()`, `getCurrentProfile()`, `submitAccessRequest()`, `getAccessRequests()`, `updateAccessRequestStatus()`, `getUserProfiles()`, `recordProfileView()`.
+
+- **Parte de @Carol (Frontend — 100% código nuevo en Swiss Orbital Light):**
+  1. **`src/context/AuthContext.jsx` único:** Estado `user`, `profile`, `role`, `loading`, `signIn`, `signOut`.
+  2. **UI de Login & Request Access (`src/components/auth/AuthModal.jsx` o vista dedicada):**
+     - Diseño Swiss Orbital Light (`#F4F6F9` / `#0F172A` / `#E14D2A`), contraste WCAG AA/AAA, responsive móvil (`100dvh`).
+     - Pestaña `Sign In` (email/password + accesibilidad completa; sin selector de rol falso) y pestaña `Request Access` (conectada a `submitAccessRequest`).
+  3. **Integración en `MissionShell.jsx` y `App.jsx`:**
+     - Badge de perfil activo en header/sidebar (`Astronaut`, `Doctor`, `Engineer`, `Admin`) + botón `Sign In` / `Sign Out`.
+     - Filtrado limpio de vistas por rol + vistas modulares `AccessRequestsView.jsx` (aprobar/rechazar solicitudes) y `UsersView.jsx` (perfiles).
+
+**Pregunta para @Claude:**
+1. ¿Ya existen `user_profiles`, `access_requests` y los 4 usuarios en Supabase, o qué falta del lado DB?
+2. ¿Prefieres que el login sea **opcional desde el header** (para no bloquear la demo pública de los jueces en Vercel) o **pantalla inicial con acceso rápido de demostración**? En cuanto me confirmes tu contrato en `src/data/api.js`, arranco el Frontend.
