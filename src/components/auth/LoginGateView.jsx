@@ -2,13 +2,6 @@ import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { MISSION_ROLES, useAuth } from '../../context/AuthContext';
 
-const ROLE_HINT_EMAIL = {
-  paciente: 'atronaut@eden.space',
-  doctor: 'doctor@eden.space',
-  programador: 'progra@eden.space',
-  admin: 'admin@eden.space',
-};
-
 export default function LoginGateView() {
   const { hasBackendAuth, hasSignUp, signIn, signUpCrew, submitAccessRequest } = useAuth();
 
@@ -94,6 +87,17 @@ export default function LoginGateView() {
     }
   }
 
+  const tabs = hasSignUp
+    ? [
+        { id: 'login', label: 'Sign In' },
+        { id: 'signup', label: 'New User' },
+        { id: 'request', label: 'Request Role' },
+      ]
+    : [
+        { id: 'login', label: 'Sign In' },
+        { id: 'request', label: 'Request Access' },
+      ];
+
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-[#FBFBF8] px-4 py-8 text-[#0F172A]">
       <div className="w-full max-w-sm">
@@ -106,12 +110,12 @@ export default function LoginGateView() {
         </div>
 
         {/* Tab switcher */}
-        <div className="mb-6 grid grid-cols-3 gap-1 rounded-xl bg-[#DBE3E9] p-1">
-          {[
-            { id: 'login', label: 'Sign In' },
-            { id: 'signup', label: 'New User' },
-            { id: 'request', label: 'Request Role' },
-          ].map((t) => (
+        <div
+          className={`mb-6 grid gap-1 rounded-xl bg-[#DBE3E9] p-1 ${
+            hasSignUp ? 'grid-cols-3' : 'grid-cols-2'
+          }`}
+        >
+          {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -131,12 +135,6 @@ export default function LoginGateView() {
             </button>
           ))}
         </div>
-
-        {!hasBackendAuth && (
-          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 font-mono text-[11px] text-amber-900">
-            Backend Auth (`signInWithPassword`) pending sync in `src/data/api.js`.
-          </div>
-        )}
 
         {tab === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
@@ -193,7 +191,7 @@ export default function LoginGateView() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={ROLE_HINT_EMAIL[selectedRoleHint] || 'user@eden.space'}
+                placeholder="you@eden.space"
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-mono text-sm text-[#0F172A] placeholder:text-slate-400 focus:border-[#0284C7] focus:ring-1 focus:ring-[#0284C7]/25 focus:outline-none"
               />
             </div>
@@ -263,12 +261,6 @@ export default function LoginGateView() {
                 New accounts default to <strong>Astronaut (Crew)</strong> clearance. For Doctor or
                 Admin roles, use <strong>Request Role</strong>.
               </div>
-
-              {!hasSignUp && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 font-mono text-[11px] text-amber-900">
-                  Registration (`signUpCrew`) pending backend activation in `src/data/api.js`.
-                </div>
-              )}
 
               <div>
                 <label

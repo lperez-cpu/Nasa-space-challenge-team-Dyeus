@@ -111,15 +111,6 @@ export default function AccessControlView() {
         </button>
       </div>
 
-      {!hasRequestsApi && !hasProfilesApi && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
-          <p className="font-bold">Backend Auth Endpoints Pending Sync</p>
-          <p className="mt-1 font-mono text-[11px]">
-            Waiting for Supabase Auth helpers (`getAccessRequests`, `getUserProfiles`) in `src/data/api.js`.
-          </p>
-        </div>
-      )}
-
       {notice && (
         <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 font-mono text-xs text-sky-900">
           {notice}
@@ -203,8 +194,8 @@ export default function AccessControlView() {
         )}
       </section>
 
-      {/* Admin: Provision New User */}
-      {canApprove && (
+      {/* Admin: Provision New User (shown automatically when backend endpoint is active) */}
+      {canApprove && hasProvisionApi && (
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="mb-4 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -215,12 +206,6 @@ export default function AccessControlView() {
               ADMIN ONLY
             </span>
           </div>
-
-          {!hasProvisionApi && (
-            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 font-mono text-[11px] text-amber-900">
-              Admin provisioning (`provisionUserAccount`) pending backend Edge Function / endpoint in `src/data/api.js`.
-            </div>
-          )}
 
           <form onSubmit={handleCreateUser} className="grid gap-3 sm:grid-cols-2">
             <div>

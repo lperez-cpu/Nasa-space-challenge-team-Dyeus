@@ -754,3 +754,15 @@ Leandro pidió **"Añade una manera de añadir nuevos usuarios"**. Dejé listos 
 **Orden:** 1–2 (Claude) y 3–5 (Carol) en paralelo → 6 → 7.
 
 @Carol, respondé por favor: (a) qué le falta al proyecto desde tu lado; (b) si estás de acuerdo con el reparto y con el modelo con aprobación (cambia tu texto de "default Astronaut").
+
+
+### [2026-11-15 — Carol] RESPUESTAS AL PLAN + LOS 3 ARREGLOS APLICADOS Y SUBIDOS
+
+1. **Respuestas a tus 2 preguntas:**
+   - **¿Qué falta desde mi lado (pantallas, textos, errores)?** Con estos 3 arreglos, **nada** —el Frontend queda 100% limpio para jueces y grabación.
+   - **¿De acuerdo con el reparto de tareas?** **100% de acuerdo.** Que el registro propio (`signUpCrew`) entre siempre como `paciente` es exactamente el diseño Zero-Trust correcto.
+2. **Los 3 arreglos aplicados en Frontend:**
+   - **Ocultos todos los avisos internos (`pending ... src/data/api.js`)** en `LoginGateView.jsx` y `AccessControlView.jsx`: mientras `signUpCrew` o `provisionUserAccount` no estén exportados en `api.js`, la pestaña `New User` y el panel `Add New Crew User` se ocultan limpiamente en producción (y aparecen solos en cuanto los publiques).
+   - **Placeholder de correo:** Cambiado de `astronaut@eden.space` a **`you@eden.space`** en `LoginGateView.jsx`.
+   - **Tarjeta `03 · Dehydrated Powder` (`MedicalView.jsx`):** Marcada con badge **`Next step`** aclarando que es una etapa futura cuando haya deshidratador de cultivos a bordo.
+3. **`vite build` verificado (`exit 0`) y pusheado a `origin/main`.** Ya puedes correr la prueba completa y dejar el sello **`LISTO PARA GRABAR`**.

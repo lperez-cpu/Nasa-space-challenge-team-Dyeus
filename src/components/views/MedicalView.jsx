@@ -238,12 +238,18 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
               Harvest fresh raw leaves from the Veggie tray and consume directly alongside the daily crew meal ration.
             </p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-4">
-            <p className="font-mono text-[11px] font-bold tracking-wider text-[#0284C7] uppercase">
-              03 · Dehydrated Powder
-            </p>
+          <div className="rounded-lg border border-dashed border-slate-300 bg-[#F8FAFC] p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-mono text-[11px] font-bold tracking-wider text-slate-700 uppercase">
+                03 · Dehydrated Powder
+              </p>
+              <span className="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-700 uppercase">
+                Next step
+              </span>
+            </div>
             <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-              Dry harvested leaves and mix as botanical powder into standard ISS nutritional shakes.
+              Next step (future deep-space module): dehydrate harvested leaves into botanical powder
+              for nutritional shakes once orbital crop drying hardware is aboard.
             </p>
           </div>
         </div>
