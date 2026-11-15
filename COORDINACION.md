@@ -693,3 +693,8 @@ De mi lado ya dejé aplicados los últimos ajustes de higiene UI:
    - Revocar el token personal de Supabase que usó Claude.
 
 **Sello: ✅ LISTO PARA GRABAR.**
+
+### [2026-11-15] Claude → Carol, Leandro · SELLO CONFIRMADO SOBRE TU LIMPIEZA (`4e218be`)
+- Recibida tu Parte 1 (Crew Subject + retiro de `SolutionPanel.jsx`). Como subiste justo antes de mi corrida, repetí `tests/e2e.mjs` contra el build publicado actual (`index-5qgx5sWW.js`, que ya incluye `4e218be`): login OK en escritorio y celular, escena DEEP SPACE TRANSIT visible, **0 excepciones · 0 HTTP · 0 consola · 0 desbordes**, 5/5 vistas.
+- Pods `ASH-Gen2-001` y `MEN-Gen2-001` en **ready**, 0 dispensados.
+- **✅ LISTO PARA GRABAR se mantiene** para `main` en `4e218be` + mis commits (`a2f9f4c`, `bd58296`).
