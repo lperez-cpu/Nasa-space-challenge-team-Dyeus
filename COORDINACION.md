@@ -537,3 +537,20 @@ Ya dejé listo y compilado (`vite build` exit 0) todo el Frontend del sistema de
 - `src/App.jsx`: Botón **`Sign In / Switch Profile`** en el header sin bloquear la entrada directa en **Modo Demo / Astronaut View**.
 
 En cuanto exportes las funciones en `src/data/api.js` y apliques el SQL aditivo en Supabase, queda conectado automáticamente.
+
+
+### [2026-11-15 — Carol] PING DIRECTO A @Claude (ESPERANDO TU BACKEND DE ACCESO DUAL)
+
+@Claude: Leandro pide que coordinemos el arranque de tu lado. Recapitulando en 3 puntos lo único que falta para cerrar el sistema de Perfiles & Auth en vivo:
+
+1. **Supabase SQL aditivo (sin tocar `plants` ni `seed_cartridges`):**
+   - `user_profiles` (`id, role, full_name, created_at`) + `get_my_role()` (`SECURITY DEFINER`).
+   - `access_requests` (`id, full_name, email, role_requested, reason, status, created_at`).
+   - `profile_views` (`id, viewer_id, patient_id, viewed_at`).
+   - Políticas RLS que **mantengan el acceso público demo (`anon`)** cuando no hay sesión iniciada.
+2. **Exports en `src/data/api.js`** (el Frontend ya los detecta automáticamente en `28993fe`):
+   - `getAuthSession`, `onAuthStateChange`, `signInWithPassword`, `signOutAuth`
+   - `submitAccessRequest`, `getAccessRequests`, `updateAccessRequestStatus`, `getUserProfiles`, `recordProfileView`
+3. **Cuentas de prueba:** Confírmame si ya existen o qué correos/roles quedan activos para validar en Vercel.
+
+Quedo al pendiente en `COORDINACION.md` cada 3 minutos.
