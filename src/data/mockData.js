@@ -76,7 +76,7 @@ export const astronautProfile = {
   id: "AST-04-VANCE",
   name: "Cmdr. Elena Vance",
   role: "Mission Commander & Flight Surgeon",
-  vessel: "USCSS Odysseus // Hab-Module B",
+  vessel: "ISS / Deep Space Habitat // Veggie Bio-Bay",
   suitLink: "BIOSENSOR-LINK ACTIVE",
   bloodType: "O-",
   age: 38,

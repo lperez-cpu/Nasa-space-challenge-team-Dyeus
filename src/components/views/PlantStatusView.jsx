@@ -178,7 +178,7 @@ export default function PlantStatusView({
               Supabase Botanical Registry
             </p>
             <h2 className="mt-0.5 text-lg font-bold text-[#0F172A]">
-              Available Species Catalog ({prescriptions.length})
+              Therapeutic Species for Active Cycle ({prescriptions.length})
             </h2>
           </div>
         </div>

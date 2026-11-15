@@ -9,7 +9,10 @@ export default function DispenserView({
   seedVault = [],
   onDispensed,
 }) {
-  const approved = seedVault.find((c) => c.status === 'approved');
+  const approved =
+    prescriptions.length > 0
+      ? seedVault.find((c) => c.status === 'approved') ?? null
+      : null;
   const matchingRx =
     prescriptions.find((p) => p.plant === approved?.plant) ?? prescriptions[0];
 
@@ -141,34 +144,33 @@ export default function DispenserView({
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-5 text-sm font-medium text-amber-900">
-          No radiation-cleared Seed Pod is currently available in the Seed Vault.
+        <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-5 text-sm font-medium text-slate-700">
+          {prescriptions.length === 0
+            ? 'No Seed Pod required — no active therapeutic recommendation in this cycle.'
+            : 'No radiation-cleared Seed Pod is currently available in the Seed Vault.'}
         </div>
       )}
 
       {/* Plug & Play Extraction Action Area */}
-      <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-5">
-        {phase === 'idle' && (
-          <div className="flex flex-col items-center gap-4 py-2 text-center">
-            <p className="max-w-lg text-sm text-slate-600">
-              Extract Seed Pod <strong className="font-mono text-[#0F172A]">[{podCode}]</strong>{' '}
-              from the vault, plug it into the existing <strong>NASA Veggie Module</strong>, and
-              inject water to begin growth ({matchingRx?.harvestDays ?? '—'} days to harvest,{' '}
-              {matchingRx?.dose || 'therapeutic serving'}). Logged in{' '}
-              <code className="rounded bg-slate-200 px-1 py-0.5 font-mono text-xs text-[#0F172A]">
-                dispense_log
-              </code>.
-            </p>
-            <button
-              type="button"
-              onClick={dispense}
-              disabled={!approved}
-              className="w-full max-w-md cursor-pointer rounded-md bg-[#E14D2A] px-6 py-4 font-mono text-sm font-bold tracking-wider text-white uppercase transition-colors hover:bg-[#c94120] active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E14D2A] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              EXTRACT SEED POD [{podCode}]
-            </button>
-          </div>
-        )}
+      {approved && (
+        <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-5">
+          {phase === 'idle' && (
+            <div className="flex flex-col items-center gap-4 py-2 text-center">
+              <p className="max-w-lg text-sm text-slate-600">
+                Extract Seed Pod <strong className="font-mono text-[#0F172A]">[{podCode}]</strong>{' '}
+                from the vault, plug it into the existing <strong>NASA Veggie Module</strong>, and
+                inject water to begin growth ({matchingRx?.harvestDays ?? '—'} days to harvest,{' '}
+                {matchingRx?.dose || 'therapeutic serving'}). Logged to crew health record.
+              </p>
+              <button
+                type="button"
+                onClick={dispense}
+                className="w-full max-w-md cursor-pointer rounded-md bg-[#E14D2A] px-6 py-4 font-mono text-sm font-bold tracking-wider text-white uppercase transition-colors hover:bg-[#c94120] active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E14D2A]"
+              >
+                EXTRACT SEED POD [{podCode}]
+              </button>
+            </div>
+          )}
 
         {phase === 'dispensing' && (
           <div className="flex flex-col gap-3 py-3" role="status" aria-live="polite">
@@ -215,7 +217,8 @@ export default function DispenserView({
             </button>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

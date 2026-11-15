@@ -1,4 +1,4 @@
-import { Pill, CheckCircle2, Radiation, XCircle } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Radiation, XCircle } from 'lucide-react';
 import RadialGauge from '../RadialGauge';
 
 export default function InventoryView({ seedVault = [], radiation }) {
@@ -12,21 +12,21 @@ export default function InventoryView({ seedVault = [], radiation }) {
 
   return (
     <section
-      aria-label="Capsule Inventory and Genetic Audit"
+      aria-label="Seed Pod Vault and Genetic Audit"
       className="flex flex-col gap-6 rounded-lg border border-slate-200 bg-white p-6 shadow-xs"
     >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#E14D2A]/10 text-[#E14D2A]">
-            <Pill className="h-4 w-4" />
+            <ShieldCheck className="h-4 w-4" />
           </span>
           <div>
-            <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-[#E14D2A] uppercase">
+            <p className="font-mono text-xs font-bold tracking-[0.16em] text-[#E14D2A] uppercase">
               Genetic Seed Vault Audit
             </p>
             <h2 className="text-lg font-bold text-[#0F172A]">
-              Capsule Inventory & Genetic Filter
+              Seed Pod Vault &amp; Genetic Filter
             </h2>
           </div>
         </div>

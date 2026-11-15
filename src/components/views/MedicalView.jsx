@@ -50,7 +50,7 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                           {alertItem.alertTitle}
                         </h3>
                         <span
-                          className={`rounded px-2 py-0.5 font-mono text-[10px] font-bold text-white ${
+                          className={`rounded px-2 py-0.5 font-mono text-xs font-bold text-white ${
                             isCritical ? 'bg-red-700' : 'bg-red-600'
                           }`}
                         >
@@ -66,7 +66,7 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                         </p>
                       )}
                       {alertItem.source && (
-                        <p className="mt-1 font-mono text-[10px] text-red-700/80">
+                        <p className="mt-1 font-mono text-xs text-red-800/80">
                           Data source: {alertItem.source}
                           {alertItem.sourceSimulated ? ' · simulated feed' : ''}
                         </p>
@@ -74,13 +74,15 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                     </div>
                   </div>
 
-                  {alertItem.value && (
-                    <div className="shrink-0 text-right">
-                      <span className="font-mono text-2xl font-bold text-red-700 tabular-nums">
-                        {alertItem.value}
-                      </span>
-                    </div>
-                  )}
+                  {alertItem.value &&
+                    alertItem.value.toUpperCase() !== String(alertItem.status).toUpperCase() &&
+                    !String(alertItem.alertTitle).toUpperCase().includes(String(alertItem.value).toUpperCase()) && (
+                      <div className="shrink-0 text-right">
+                        <span className="font-mono text-2xl font-bold text-red-700 tabular-nums">
+                          {alertItem.value}
+                        </span>
+                      </div>
+                    )}
                 </article>
               );
             })}
@@ -99,7 +101,7 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
               <Leaf className="h-4 w-4" />
             </span>
             <div>
-              <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
+              <p className="font-mono text-xs font-bold tracking-[0.16em] text-emerald-700 uppercase">
                 Dietary Therapeutics · Food as Medicine
               </p>
               <h2 className="text-lg font-bold text-[#0F172A]">
@@ -121,7 +123,9 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
 
         {prescriptions.length === 0 ? (
           <p className="text-sm text-slate-600">
-            No active alerts · no dietary therapeutic crop required in this cycle.
+            {activeAlerts.length > 0
+              ? 'Alerts detected · no matching crop in the botanical registry.'
+              : 'No active alerts · no dietary therapeutic crop required in this cycle.'}
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
