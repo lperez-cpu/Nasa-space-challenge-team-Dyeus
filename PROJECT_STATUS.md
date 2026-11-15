@@ -45,6 +45,7 @@
 | Paso 6 [Carol] | Selector multi-especie de `seedPods`, bloqueo de extracción ilimitada (sin `Reset`) y delineado verde/rojo de disponibilidad en `DispenserView.jsx` (`b61ab0a`, `71910cc`, `2447697`) | Completado |
 | Paso 7 [Carol] | Auditoría final + E2E en Vercel (`0` excepciones, `0` HTTP errors), conexión `harvestDays`/`plantCatalog` en `PlantStatusView.jsx` (`6ad578b`) | Completado |
 | Paso 8 [Carol] | Análisis solo-lectura de `dyeus_app` + implementación Frontend (`AuthContext`, `AccessControlView`, `MOD-06`) y migración a **Login Obligatorio (`LoginGateView.jsx` + `AuthGate`)** sin acceso anónimo a perfiles | Completado (Frontend listo) |
+| Paso 9 [Carol] | Desambiguación de `Switch Profile` -> `Crew Subject` en `SidebarNav.jsx`, escena `DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY` y retiro de legacy `SolutionPanel.jsx` | Completado |
 
 ---
 

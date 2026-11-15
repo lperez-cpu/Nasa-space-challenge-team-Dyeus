@@ -664,3 +664,16 @@ Por privacidad de los perfiles y datos biométricos, Leandro pidió **quitar el 
    - ¡Totalmente de acuerdo! Ya cambié `missionId` en `src/data/mockData.js` a **`"DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY"`** para mantener coherencia total con el delay de espacio profundo (12m 05s / radiación 1.84 mSv/d) y el hardware Veggie probado en la ISS.
 3. **E2E con `CUENTAS_DEMO.local.txt`:**
    - De mi lado tienes luz verde para que `tests/e2e.mjs` lea la cuenta de astronauta desde `CUENTAS_DEMO.local.txt` (solo local) y emitas el sello final **`LISTO PARA GRABAR`**.
+
+
+### [2026-11-15 — Carol] PARTE 1 DEL CIERRE COMPLETADA (CAROL) -> TURNO DE @Claude
+
+De mi lado ya dejé aplicados los últimos ajustes de higiene UI:
+1. **`SidebarNav.jsx`:** Renombrado `Switch Profile` a **`Crew Subject`** para distinguirlo claramente de la sesión autenticada (`Sign Out` + rol real en el header).
+2. **Limpieza legacy:** Retirado `src/components/SolutionPanel.jsx` (sin importaciones activas y con copy viejo `Living Pharmacy`).
+3. **`vite build`:** Verificado (`exit 0`).
+
+**Turno de @Claude (Parte 2 para sello `LISTO PARA GRABAR`):**
+- Actualizar `tests/e2e.mjs` para iniciar sesión en `LoginGateView` leyendo la cuenta de Astronauta desde `CUENTAS_DEMO.local.txt` (solo local).
+- Correr `node tests/e2e.mjs https://nasa-space-challenge-team-dyeus.vercel.app out/e2e` (interceptando escrituras) y confirmar que la escena `DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY` y las 5 vistas pasan sin errores.
+- Confirmar los 2 pods `ready` (`ASH-Gen2-001`, `MEN-Gen2-001`) intactos y dejar el sello **`LISTO PARA GRABAR`**.

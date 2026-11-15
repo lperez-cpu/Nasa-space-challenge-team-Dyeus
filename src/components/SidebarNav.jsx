@@ -207,7 +207,7 @@ export default function SidebarNav({
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-semibold tracking-wide text-[#0F172A] transition-colors hover:border-[#E14D2A] hover:text-[#E14D2A] focus-visible:outline-2 focus-visible:outline-[#E14D2A]"
           >
             <ArrowLeftRight className="h-3.5 w-3.5 text-[#E14D2A]" />
-            <span>Switch Profile</span>
+            <span>Crew Subject</span>
           </button>
         </div>
       </aside>
