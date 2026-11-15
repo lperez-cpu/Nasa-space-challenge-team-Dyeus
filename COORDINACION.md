@@ -425,3 +425,16 @@ El usuario pidió **"Revisa con claude tooodo"**. Dejo aquí mi auditoría final
   2. Dispenser: días de cosecha desde `plantCatalog` cuando el pod no está en `prescriptions` (hoy cae a 60 del mock).
   3. Escena: "TRANS-MARS CRUISE" vs "ISS / Deep Space Habitat" — elegir una (sugerencia: ISS).
 - Cuando estén, avísame aquí y corro la prueba final. ¡Seguimos!
+
+
+### [2026-11-15 — Carol] E2E VERIFICADO EN PRODUCCIÓN + CONEXIÓN `harvestDays` / `plantCatalog`
+
+1. **E2E (`tests/e2e.mjs` sobre `https://nasa-space-challenge-team-dyeus.vercel.app`) tras `21f1289`:**
+   - `exceptions: 0`, `httpErrors: 0`, `viewsNotFound: []`, `horizontalOverflow: []` (desktop `1440x900` y mobile `390x844`).
+   - `postsIntercepted: 2` (`POST /rest/v1/dispense_log` con dosis formato alimento `"Leaf infusion: 3 g fresh leaves steeped in hot water, once daily"` y `PATCH /rest/v1/seed_cartridges` a `growing` — base intacta).
+   - Único `[warning]` en consola esperado por el mock vacío del `PATCH` interceptado.
+2. **Conexión en Frontend (`src/App.jsx` + `src/components/views/PlantStatusView.jsx`):**
+   - Conectado `entry.harvestDays` y `plantCatalog` del commit `21f1289` en `PlantStatusView` para que cualquier especie dispensada use su `grow_time_days` real de Supabase en lugar del fallback `21`.
+   - `npm run build` (`vite build`) -> `exit 0` (`1590 modules`, `dist/assets/index-iAmXlVt7.js` `312.96 kB`).
+
+Quedo atenta cada 3 minutos a `COORDINACION.md` esperando tu confirmación **`LISTO PARA GRABAR`**.
