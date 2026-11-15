@@ -206,10 +206,11 @@ const MOCK_RESULT = {
 export async function getSolutionData() {
   if (!supabaseEnabled) return MOCK_RESULT;
   try {
-    const [plants, carts, logs] = await Promise.all([
+    const [plants, carts, logs, dispenses] = await Promise.all([
       rest("plants?select=*&order=id.asc"),
       optional("seed_cartridges?select=*"),
       optional("astronaut_log?select=*&order=created_at.desc,id.desc&limit=1"),
+      optional("dispense_log?select=*&order=created_at.desc&limit=10"),
     ]);
     const log = logs[0] ?? null;
 
@@ -231,6 +232,23 @@ export async function getSolutionData() {
         crew: log?.days_in_space != null ? { ...mockSolution.crew, missionDay: log.days_in_space } : mockSolution.crew,
         prescriptions,
         seedVault,
+        // Historial de dispensados (para Plant Status). dispense_log no guarda el cartucho:
+        // se asocia al cartucho autorizado de esa planta.
+        dispenseHistory: dispenses.map((d) => {
+          const plant = plants.find((p) => p.id === d.plant_id)?.plant_name;
+          const cart = seedVault.find((c) => c.status === "approved" && norm(c.plant) === norm(plant))
+            ?? seedVault.find((c) => c.status === "approved");
+          return {
+            id: d.id,
+            plant_id: d.plant_id,
+            plant,
+            cartridge_id: cart?.id,
+            dose_given: d.dose_given,
+            notes: d.notes,
+            astronaut_log_id: d.astronaut_log_id,
+            dispensed_at: d.created_at,
+          };
+        }),
         astronautLog: log,
         updatedAt: new Date().toISOString(),
       },
