@@ -15,9 +15,9 @@ When the astronaut's health log shows a problem, E.D.E.N. prescribes a plant to 
 ## How it works
 
 1. **Health alert.** The astronaut's latest record in `astronaut_log` (stress, inflammation, cognitive, cardiovascular, nutrition and bone levels, heart rate, sleep, symptoms) is read every 15 seconds. Any level above `LOW` becomes an alert. Each value shows the ISS research hardware that would produce it on orbit (CSA's Bio-Monitor, Actiwatch Spectrum, CNES's EveryWear app), marked **simulated feed** in this prototype.
-2. **Dietary prescription.** Each alert is matched with a plant in the `plants` table. Crops NASA has already grown in space (Veggie / Advanced Plant Habitat) are preferred; Earth-only candidates are labeled **NOT FLIGHT-VALIDATED**.
+2. **Dietary prescription.** Each alert is matched with a plant in the `plants` table. Servings are scaled to the astronaut's body mass (base serving × mass / 70 kg, capped between 0.75× and 1.25×). This is a **modeled** adjustment, not clinical dosing. Crops NASA has already grown in space (Veggie / Advanced Plant Habitat) are preferred; Earth-only candidates are labeled **NOT FLIGHT-VALIDATED**.
 3. **Seed vault audit.** The cumulative radiation dose of each seed cartridge is estimated from the cruise dose rate measured by MSL/RAD (1.84 mSv/day). Cartridges past the damage threshold are rejected and the rest are authorized. In this prototype, seed viability is a **modeled** value, not a lab measurement (see [Feasibility](#feasibility)).
-4. **Extract the Seed Pod.** The crew extracts the authorized pod (e.g. `ASH-Gen2-001`) from the vault: the pod is marked `growing` and the action is written to `dispense_log`. The pod plugs into NASA's existing Veggie greenhouse and is watered by hand.
+4. **Extract the Seed Pod.** The crew extracts the authorized pod (e.g. `ASH-Gen2-001`) from the vault: the pod is marked `growing` and the action is written to `dispense_log`. The pod plugs into NASA's existing Veggie greenhouse and is watered by hand. Seed Pods are **reusable**: after the crop, the crew reloads the pod with vault seeds (*Reload pod*) and it is ready again.
 5. **Consumption.** No chemical processing: crops are eaten fresh or as a hot-water infusion, using hardware already on the ISS. Dried powder is shown as a next step.
 
 The mission scene is a **deep-space transit that uses ISS-proven Veggie hardware**: the Earth delay and radiation dose are computed for that distance, not for low Earth orbit.
@@ -76,7 +76,7 @@ Accounts are not created from this app. The team's database administrator manage
 
 1. Create the user in *Authentication → Users → Add user*.
 2. The `handle_new_user` trigger gives the account a profile with the astronaut role.
-3. To give it another role, change `role` in the `user_profiles` table (`doctor`, `programador` or `admin`).
+3. To give it another role, change `role` in the `user_profiles` table (`doctor`, `programador` or `admin`). Height and body mass go in `height_cm` and `body_mass_kg`.
 
 The person then signs in to the dashboard with that email and password. To ask for an account, use *Request Access* on the sign-in screen.
 
@@ -95,6 +95,8 @@ E.D.E.N. adds **software, not flight hardware**. Everything it asks the crew to 
 | Cruise radiation dose rate (1.84 mSv/day) and the 600 mSv career limit | Real published values (MSL/RAD; NASA standard) |
 | Cumulative dose per astronaut / per seed cartridge | Modeled: days in space × dose rate |
 | Seed viability % and the "damaged / authorized" verdict | Modeled demo values |
+| Height and body mass | Entered by the database administrator (on orbit, body mass is measured with NASA's SLAMMD because scales do not work in microgravity) |
+| Serving adjusted to body mass | Modeled: base serving × mass / 70 kg, capped at 0.75×–1.25× |
 | Health readings (heart rate, levels, sleep) | Simulated feed (seed data or the Arduino mock wearable in [`hardware/`](hardware/)) |
 | Greenhouse sensors (pH, temperature, light) | Simulated |
 | Plant–condition matches | From the plant catalog, with the evidence level shown for each plant |
@@ -107,7 +109,7 @@ E.D.E.N. adds **software, not flight hardware**. Everything it asks the crew to 
 
 ## Tech stack
 
-- **Frontend:** React 19, Vite 6, Tailwind CSS 4, lucide-react
+- **Frontend:** React 19, Vite 6, Tailwind CSS 4, lucide-react, Three.js (3D Seed Pod → Veggie mockup, built in code and loaded on demand)
 - **Backend:** Supabase (PostgreSQL + REST API + Auth), accessed with plain `fetch` (no SDK)
 - **Hosting:** Vercel (deploys automatically from `main`)
 - **Hardware (optional):** Arduino sketch that simulates a wearable biosensor and feeds `astronaut_log` — see [`hardware/`](hardware/)
@@ -120,7 +122,7 @@ E.D.E.N. adds **software, not flight hardware**. Everything it asks the crew to 
 | `plants` | Plant catalog: condition, plant, active compound, serving, grow time, NASA-grown flag, evidence |
 | `seed_cartridges` | Seed Pod inventory (`pod_id`, slot, status, prescribed patient) |
 | `dispense_log` | Every extracted pod: plant, serving, notes, linked health record |
-| `user_profiles` | Role and name of each Supabase Auth user |
+| `user_profiles` | Role, name, height (`height_cm`) and body mass (`body_mass_kg`) of each Supabase Auth user |
 | `access_requests` | Access requests from the sign-in screen (`pending` / `approved` / `rejected`) |
 | `profile_views` | Audit log of who viewed which crew profile |
 
@@ -132,6 +134,8 @@ Database setup lives in [`supabase/`](supabase/), applied in this order:
 2. `close_public_reads.sql`: private data requires a session.
 3. `security_hardening.sql`: closes public writes and requires a role.
 4. `signup_trigger.sql`: every new account gets a profile with the astronaut role.
+5. `pod_reload.sql`: `reload_pod()` makes Seed Pods reusable (requires a crew role).
+6. `body_metrics.sql`: height and body mass columns.
 
 The other files:
 

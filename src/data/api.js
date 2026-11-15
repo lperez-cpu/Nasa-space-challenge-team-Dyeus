@@ -136,6 +136,71 @@ const radiationFor = (day) => {
   };
 };
 
+// ── Talla y masa corporal → ajuste de porciones ──
+// Modelo, NO dosis clínica: porción base × masa / 70 kg (adulto de referencia), limitado a 0,75×–1,25×.
+// Solo se escalan las cantidades en gramos ("3 g fresh leaves"); el resto del texto queda igual.
+const REFERENCE_MASS_KG = 70;
+const DOSE_FACTOR_RANGE = [0.75, 1.25];
+let currentBody = null; // cuerpo del astronauta que muestra la dashboard (lo usa logDispense)
+
+const bodyFrom = (profile) => {
+  const mass = Number(profile?.body_mass_kg);
+  if (!mass) return null;
+  const height = Number(profile?.height_cm) || null;
+  const factor = Math.min(DOSE_FACTOR_RANGE[1], Math.max(DOSE_FACTOR_RANGE[0], mass / REFERENCE_MASS_KG));
+  return {
+    heightCm: height,
+    bodyMassKg: mass,
+    bmi: height ? Math.round((mass / (height / 100) ** 2) * 10) / 10 : null,
+    doseFactor: Math.round(factor * 100) / 100,
+    referenceMassKg: REFERENCE_MASS_KG,
+  };
+};
+
+const roundGrams = (g) => (g < 10 ? Math.round(g * 2) / 2 : Math.round(g));
+
+/** Escala las cantidades en gramos de una porción: scaleDose("3 g fresh leaves", 1.2) → "3.5 g fresh leaves". */
+export const scaleDose = (dose, factor) => {
+  if (!dose || !factor || factor === 1) return dose;
+  return String(dose).replace(/(~?)(\d+(?:\.\d+)?)\s*g\b/g, (_, approx, n) => `${approx}${roundGrams(Number(n) * factor)} g`);
+};
+
+/** Aplica el ajuste por masa a una planta/receta. Guarda la porción base y una nota "modeled". */
+const withBodyDose = (body) => (p) => {
+  if (!body || !p?.dose) return p;
+  if (!/\d\s*g\b/.test(p.dose)) return p; // sin cantidad en gramos (p. ej. "~30 min de cuidado"): no se ajusta
+  const scaled = scaleDose(p.dose, body.doseFactor); // puede quedar igual al redondear: igual se indica para qué masa es
+  return {
+    ...p,
+    doseBase: p.dose,
+    dose: `${scaled} · adj. ${body.bodyMassKg} kg`,
+    doseFactor: body.doseFactor,
+    doseNote: `Serving scaled to ${body.bodyMassKg} kg body mass (×${body.doseFactor} vs ${REFERENCE_MASS_KG} kg reference) · modeled, not clinical dosing`,
+  };
+};
+
+/** Signos de talla y masa con la misma forma que el resto de vitals. */
+const bodyVitals = (body) => (!body ? {} : {
+  bodyMass: {
+    id: "bodyMass",
+    label: "Body Mass",
+    value: `${body.bodyMassKg} kg`,
+    referenceRange: `Serving factor ×${body.doseFactor} (ref. ${REFERENCE_MASS_KG} kg)`,
+    status: "NOMINAL",
+    ...src("slammd"),
+  },
+  ...(body.heightCm ? {
+    height: {
+      id: "height",
+      label: "Height",
+      value: `${body.heightCm} cm`,
+      referenceRange: body.bmi ? `BMI ${body.bmi}` : "",
+      status: "NOMINAL",
+      ...src("slammd"),
+    },
+  } : {}),
+});
+
 // ── Fuente de cada dato: el equipo real de investigación en la ISS que lo produciría ──
 // (no todo es de la NASA: Bio-Monitor es de la Agencia Espacial Canadiense, EveryWear de CNES).
 // (doc del equipo "Fuentes y Etiquetas NASA"). En la demo los datos llegan de astronaut_log
@@ -148,6 +213,7 @@ export const DATA_SOURCES = {
   rad: { name: "MSL/RAD cruise dose rate (Zeitlin et al., Science 2013)", url: null },
   veggie: { name: "Veggie (Vegetable Production System)", url: "https://www.nasa.gov/missions/station/so-you-want-to-be-a-space-farmer/" },
   aph: { name: "Advanced Plant Habitat (APH)", url: "https://science.nasa.gov/mission/advanced-plant-habitat/" },
+  slammd: { name: "SLAMMD (on-orbit body mass)", url: null },
 };
 const src = (key, simulated = true) => ({ source: DATA_SOURCES[key].name, sourceUrl: DATA_SOURCES[key].url, sourceSimulated: simulated });
 
@@ -371,11 +437,19 @@ export async function getSolutionData() {
       optional("dispense_log?select=*&order=created_at.desc&limit=10"),
     ]);
     const log = logs[0] ?? null;
+    // Perfil del astronauta del registro (nombre real, talla y masa). RLS: doctor/admin ven a todos,
+    // un paciente solo a sí mismo; si no se puede leer, no hay ajuste de porciones.
+    const [owner] = log?.user_id
+      ? await optional(`user_profiles?select=full_name,height_cm,body_mass_kg&id=eq.${encodeURIComponent(log.user_id)}`)
+      : [];
+    const body = bodyFrom(owner);
+    currentBody = body;
+    const adjust = withBodyDose(body);
 
     // Con registro: alertas y recetas salen de él (puede no haber ninguna = astronauta estable).
     // Sin registro: alertas de respaldo, para que la demo siempre muestre algo.
     const alerts = log ? alertsFromLog(log) : ACTIVE_ALERTS;
-    const prescriptions = buildPrescriptions(log, alerts, plants);
+    const prescriptions = buildPrescriptions(log, alerts, plants).map(adjust);
     if (!log && !prescriptions.length) throw new Error("Ninguna planta coincide con las alertas de respaldo");
 
     // Sin auditoría real en la base, los cartuchos de demo siguen a la primera receta activa
@@ -383,17 +457,24 @@ export async function getSolutionData() {
     const auditRows = carts.filter(isAuditRow);
     const seedPods = carts.filter((r) => r.pod_id).map((r) => mapPod(r, plants));
     const seedVault = auditRows.length ? auditRows.map(mapCartridge) : vaultFor(prescriptions[0]?.plant, seedPods);
+    const biometrics = buildBiometrics(log, alerts);
+    biometrics.vitals = { ...biometrics.vitals, ...bodyVitals(body) };
     return {
       source: "supabase",
-      biometrics: buildBiometrics(log, alerts),
+      biometrics,
       data: {
         ...mockSolution,
-        crew: log?.days_in_space != null ? { ...mockSolution.crew, missionDay: log.days_in_space } : mockSolution.crew,
+        crew: {
+          ...mockSolution.crew,
+          ...(log?.days_in_space != null ? { missionDay: log.days_in_space } : {}),
+          ...(owner?.full_name ? { ownerName: owner.full_name, ownerId: log.user_id } : {}),
+          body, // { heightCm, bodyMassKg, bmi, doseFactor, referenceMassKg } o null
+        },
         prescriptions,
         seedVault,
         seedPods, // inventario real de la bóveda (todos los pods)
         // Catálogo completo de plantas (para días de cosecha, invernadero y consumo de cualquier pod).
-        plantCatalog: plants.map((r) => mapPlant(r, r.condition, "")),
+        plantCatalog: plants.map((r) => adjust(mapPlant(r, r.condition, ""))),
         // Historial de dispensados (para Plant Status). dispense_log no guarda el cartucho:
         // se asocia al cartucho autorizado de esa planta.
         // Filas sin planta (plant_id null) se omiten: no se puede saber qué se cultivó.
@@ -438,7 +519,7 @@ export async function logDispense(cartridge) {
       method: "POST",
       body: clean({
         plant_id: plant.id,
-        dose_given: plant.dose,
+        dose_given: scaleDose(plant.dose, currentBody?.doseFactor),
         notes: [cartridge.cartridge, cartridge.rxTag, cartridge.viability != null ? `viability ${cartridge.viability}%` : null]
           .filter(Boolean).join(" · "),
         astronaut_log_id: logs[0]?.id,
@@ -466,6 +547,20 @@ async function markPodGrowing(podId) {
   } catch (err) {
     console.warn(`[E.D.E.N.] No se pudo marcar el pod ${podId} como growing:`, err);
   }
+}
+
+/**
+ * Los Seed Pods son reutilizables: el tripulante recarga el pod con semillas de la bóveda y vuelve a
+ * "ready" en el dispensador. Llama a la función reload_pod (supabase/pod_reload.sql), que exige sesión
+ * con rol. Devuelve { podId, status, changed } (changed=false si ya estaba "ready").
+ */
+export async function reloadPod(podId) {
+  if (!supabaseEnabled) throw new Error("Supabase is not configured.");
+  if (!podId) throw new Error("A Seed Pod id is required.");
+  const rows = await rest("rpc/reload_pod", { method: "POST", body: { p_pod_id: String(podId) } }).catch((err) => {
+    throw new Error(/42501|crew role/i.test(err.message) ? "Sign in with a crew account to reload Seed Pods." : err.message);
+  });
+  return { podId: String(podId), status: rows?.[0]?.status ?? "ready", changed: Boolean(rows?.length) };
 }
 
 /** Hook para App.jsx: arranca con los datos de demo, los reemplaza al llegar Supabase y
