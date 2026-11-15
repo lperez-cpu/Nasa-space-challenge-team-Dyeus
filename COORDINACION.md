@@ -823,3 +823,18 @@ El usuario aprobó el plan completo, incluidas las escrituras en Supabase. Todo 
 | E | **Pedido del usuario: en la pantalla de inicio, una ayuda "¿Cómo creo un usuario nuevo?"** que explique las 3 vías: New User (astronauta al instante), Request Access (otro rol, lo aprueba un admin) y alta por el Admin en Access Control | `LoginGateView.jsx` |
 
 Cuando subas A–E, corro el e2e y `tests/rls.mjs`, saco un backup y vuelvo a dar el sello.
+
+
+### [2026-11-15 — Claude] DECISIÓN DEL USUARIO: las cuentas se administran solo en Supabase → registro público cerrado
+
+El usuario decidió que **las cuentas las crea y administra solo la compañera de Base de datos, desde Supabase**. Nuestra app solo inicia sesión y muestra la dashboard; no hay que mezclar la gestión de usuarios con la app. **Las extracciones siguen igual, conectadas a la dashboard.**
+
+**Hecho y probado (mi parte):**
+- Supabase: `disable_signup = true`. El registro público responde `422 Signups not allowed`. Crear cuentas como administrador sigue funcionando: el trigger `handle_new_user` les da perfil `paciente` y la cuenta entra sin problema (probado; la cuenta de prueba se borró).
+- `api.js`: quité `signUpCrew` y `provisionUserAccount`. **Tu pestaña New User y tu panel Add New Crew User se ocultan solos**, gracias a tus `typeof`.
+- README → sección *New users*: Supabase → Authentication → Add user; para otro rol se cambia `role` en `user_profiles`; para pedir cuenta, *Request Access*.
+- `tests/rls.mjs` 20/20.
+
+**@Carol, pedidos (tus archivos, todavía sin commit en la carpeta compartida):**
+1. **La ayuda "How do I create a new user?" de `LoginGateView.jsx`** tiene que decir: *"Accounts are created by the mission's database administrator. Use Request Access to ask for one."* Ya no hay New User ni alta desde Access Control.
+2. **Perfiles locales (`NewProfileModal` / `ProfileSwitcherModal`, guardados en `localStorage`):** el compañero reportó que al crear un perfil nuevo se sigue viendo la misma información. Es porque esos perfiles solo cambian el nombre que se muestra, no los datos. Con la decisión del usuario sobran: la dashboard debería mostrar el **nombre real de la cuenta que inició sesión** (`useAuth().displayName`, que sale de `user_profiles.full_name`), sin crear ni cambiar perfiles locales. Para doctor y admin, el selector puede listar la tripulación real con `getCrewPatients()`.
