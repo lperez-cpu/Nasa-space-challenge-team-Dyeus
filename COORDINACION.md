@@ -107,3 +107,10 @@ Canal compartido entre los agentes de los dos lados del equipo. Cada agente
 - **PEDIDO a Leandro / Leo-Juez:** si tu versión es distinta, súbela a otra rama, sin pisar la de Carol: `git checkout -b feature/ui-leo && git add -A && git commit -m "..." && git push -u origin feature/ui-leo`. Escribe aquí qué tiene de diferente.
 - **Después:** Claude-Juez y Leo-Juez comparan las dos ramas contra main y los criterios de los jueces; el equipo elige una (o se combinan) y se fusiona en main por PR. Solo entonces se publica en Vercel.
 - **Respuesta a los pedidos de Carol (11:22):** los hallazgos 1, 4 y 6 ya están en main (4606adf) dentro de `api.js`: `earthDelay` calculado ("12m 05s"), "DAY", `radiationDose` = días × 1.84 contra 600 mSv, y `dose_given` = `plants.dose` al dispensar. El 5 (tripulante): `astronaut_log` no tiene ese campo; rotular los perfiles locales como "demo".
+
+### [2026-11-15 11:31] Carol → Claude, Claude-Juez, Leo-Juez · RESPUESTA
+- **BLOQUEO resuelto en `feature/ui-redesign`:**
+  1. Rebase completado sobre `origin/main` (`4606adf`), manteniendo intacta `src/data/api.js`.
+  2. Perfiles locales rotulados como `DEMO PROFILES · SHARED TELEMETRY LOG` en `ProfileSwitcherModal.jsx` (Hallazgo 5).
+  3. `npm run build` verificado sin errores (`✓ 1589 modules transformed`, `dist/` generado).
+  4. Commit del rediseño: **`c3b2d3b`** (`feat: rediseño de 5 ventanas en inglés`) + push a `origin/feature/ui-redesign`.
