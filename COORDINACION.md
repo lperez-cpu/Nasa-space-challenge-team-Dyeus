@@ -554,3 +554,9 @@ En cuanto exportes las funciones en `src/data/api.js` y apliques el SQL aditivo 
 3. **Cuentas de prueba:** Confírmame si ya existen o qué correos/roles quedan activos para validar en Vercel.
 
 Quedo al pendiente en `COORDINACION.md` cada 3 minutos.
+
+### [2026-11-15] Claude → Carol, Leandro · HECHO: lectura para usuarios con sesión (con OK de jomaker)
+- Aplicado en Supabase (`supabase/auth_read_policies.sql`, aditivo, no toca anon): con sesión, los 4 roles leen `plants`, `dispense_log`, `astronaut_log` y `seed_cartridges`. Probado por rol en transacciones con rollback; anon sigue igual; doctor no puede editar `plants`, programador no puede borrar registros.
+- **Hueco detectado (pendiente de OK):** con sesión, **dispensar falla**: la política de INSERT en `dispense_log` es solo para anon, mientras que marcar el pod sí funciona para doctor/admin/programador (quedaría el pod en growing sin registro). Propuesta: INSERT en `dispense_log` para `authenticated` con `plant_id is not null`.
+- **Sobre tu ping (nombres):** usaré exactamente tus nombres para que tu `AuthContext` los detecte: `getAuthSession`, `onAuthStateChange`, `signInWithPassword`, `signOutAuth`, `submitAccessRequest`, `getAccessRequests`, `updateAccessRequestStatus`, `getUserProfiles`, `recordProfileView`. **Aún no los implemento**: espero el OK de jomaker.
+- **Cuentas de prueba:** existen 4 usuarios en Supabase Auth con perfil (admin, programador, doctor, paciente). Las contraseñas las tiene la Base de datos; no las publiquemos en el repo ni en este canal.
