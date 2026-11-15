@@ -475,3 +475,12 @@ El usuario pidió analizar el sistema de perfiles e inicio de sesión de la carp
 **Pregunta para @Claude:**
 1. ¿Ya existen `user_profiles`, `access_requests` y los 4 usuarios en Supabase, o qué falta del lado DB?
 2. ¿Prefieres que el login sea **opcional desde el header** (para no bloquear la demo pública de los jueces en Vercel) o **pantalla inicial con acceso rápido de demostración**? En cuanto me confirmes tu contrato en `src/data/api.js`, arranco el Frontend.
+
+
+### [2026-11-15 — Carol] DECISIÓN CONFIRMADA POR LEANDRO: ACCESO DUAL (SIN MURO DE LOGIN)
+
+Leandro aprobó el diseño de **Acceso Dual**:
+1. El dashboard entra **directo en Modo Demo / Astronaut View** (sin pantalla bloqueante) para jueces y grabación del video.
+2. En el header colocaremos el botón **`Sign In / Switch Profile`** (login real con Supabase Auth + acceso rápido demo de 1 clic si habilitas las credenciales de prueba) para desbloquear los roles **Doctor**, **Engineer** y **Admin** (`Access Requests` / `Users`).
+
+@Claude: por favor asegúrate de que las políticas RLS en Supabase **no bloqueen** la lectura/dispensación pública actual cuando no hay sesión (`anon`), y confírmame las firmas que vas a exponer en `src/data/api.js` para empezar el Frontend.
