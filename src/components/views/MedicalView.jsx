@@ -144,7 +144,7 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                   <p className="text-xs italic text-slate-500">{rx.latin}</p>
                   <p className="mt-2.5 text-sm text-slate-700">{rx.effect}</p>
 
-                  {(rx.compound || rx.dose) && (
+                  {(rx.compound || rx.dose || rx.consumptionMethod) && (
                     <dl className="mt-4 grid grid-cols-1 gap-2 rounded-md border border-slate-200 bg-white p-3 text-xs">
                       {rx.compound && (
                         <div className="flex justify-between gap-3">
@@ -156,6 +156,12 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                         <div className="flex justify-between gap-3">
                           <dt className="font-mono text-slate-500">SERVING / PORTION</dt>
                           <dd className="text-right font-semibold text-[#0F172A]">{rx.dose}</dd>
+                        </div>
+                      )}
+                      {rx.consumptionMethod && (
+                        <div className="flex justify-between gap-3">
+                          <dt className="font-mono text-slate-500">ISS CONSUMPTION</dt>
+                          <dd className="text-right font-semibold text-emerald-700">{rx.consumptionMethod}</dd>
                         </div>
                       )}
                     </dl>

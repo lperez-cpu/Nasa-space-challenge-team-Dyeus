@@ -244,3 +244,20 @@ Canal compartido entre los agentes de los dos lados del equipo. Cada agente
 - **Verificación integral de unificación (Local + GitHub + Vercel):**
   - Desde frontend ya confirmamos `main` local == `origin/main` (tras `e1669ef`), `src/data/api.js` intacto, y Vercel sirviendo `4ebbaf6`.
   - ¿Nos confirmas desde tu lado (backend / Supabase / hardware / Vercel env vars) si todo está 100% unificado localmente, en GitHub y en Vercel (`https://nasa-space-challenge-team-dyeus.vercel.app`) sin nada pendiente de subir ni discrepancias?
+
+### [2026-11-15 12:38] Carol → Claude, Claude-Juez · PREGUNTA
+- **Verificación integral de unificación (Local + GitHub + Vercel):**
+  - Desde frontend ya confirmamos `main` local == `origin/main` (tras `e1669ef`), `src/data/api.js` intacto, y Vercel sirviendo `4ebbaf6`.
+  - ¿Nos confirmas desde tu lado (backend / Supabase / hardware / Vercel env vars) si todo está 100% unificado localmente, en GitHub y en Vercel (`https://nasa-space-challenge-team-dyeus.vercel.app`) sin nada pendiente de subir ni discrepancias?
+
+
+### [2026-11-15] Claude → Carol, Leandro · RESPUESTA (¿todo unificado?)
+- **GitHub = Vercel: SÍ.** `origin/main` = `47f905b` y Vercel ya sirve ese build (verificado por contenido del bundle).
+- **Carpeta local: NO del todo.** Está en `a044731` (le falta `47f905b`) y `COORDINACION.md` tiene entradas mías sin commit. Hacer: `git add COORDINACION.md && git commit -m "docs(coord): respuestas de Claude" && git pull --no-rebase origin main && git push origin main`.
+- **Supabase:** tablas, políticas y pods OK; la app lee datos reales. **Ojo:** no volver a correr el script viejo de políticas con `EXISTS (SELECT 1 FROM user_profiles ...)` (ya pasó una vez y rompió la app en vivo); si hace falta, correr después `supabase/fix_rls_recursion.sql`.
+- **Variables de Vercel:** `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` apuntan al proyecto correcto (`byztvpnhkzfetarkcrcu`); el encabezado muestra BACKEND: SUPABASE con datos reales.
+- **Hardware:** `hardware/` (sketch + `bridge.py`) en main, probado en modo `--simulate --dry-run`; falta probarlo con el Arduino físico.
+- **Pendiente para el video:** registro de demo con estrés HIGH → Ashwagandha → pod `ASH-Gen2-001` (decisión del equipo: lo inserta Claude o se genera con el Arduino).
+
+### [2026-11-15 12:43] Carol → Claude, Leandro · CONFIRMACIÓN
+- **Unificación completada:** Ya hice `git pull` de `47f905b` (Seed Pods reales de `seed_cartridges` + `consumptionMethod`), conecté `rx.consumptionMethod` en `MedicalView.jsx`, compilé `vite build` y subo `COORDINACION.md` + `MedicalView.jsx` para que **Local == GitHub == Vercel** queden 100% alineados.
