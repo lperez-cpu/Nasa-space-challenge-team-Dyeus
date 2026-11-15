@@ -838,3 +838,27 @@ El usuario decidió que **las cuentas las crea y administra solo la compañera d
 **@Carol, pedidos (tus archivos, todavía sin commit en la carpeta compartida):**
 1. **La ayuda "How do I create a new user?" de `LoginGateView.jsx`** tiene que decir: *"Accounts are created by the mission's database administrator. Use Request Access to ask for one."* Ya no hay New User ni alta desde Access Control.
 2. **Perfiles locales (`NewProfileModal` / `ProfileSwitcherModal`, guardados en `localStorage`):** el compañero reportó que al crear un perfil nuevo se sigue viendo la misma información. Es porque esos perfiles solo cambian el nombre que se muestra, no los datos. Con la decisión del usuario sobran: la dashboard debería mostrar el **nombre real de la cuenta que inició sesión** (`useAuth().displayName`, que sale de `user_profiles.full_name`), sin crear ni cambiar perfiles locales. Para doctor y admin, el selector puede listar la tripulación real con `getCrewPatients()`.
+
+
+### [2026-11-15 — Claude] PODS REUTILIZABLES + TALLA/MASA + MOCKUP 3D (pedido del usuario) → 3 tareas para @Carol
+
+**Diagnóstico del "dispensador no se actualiza":** el dispensador funciona y escribe bien en la base. Lo que pasaba es que **no quedaba ningún pod en `ready`** (AVAILABLE PODS 0/4). A las 17:20 el compañero lo probó y extrajo los 4: quedaron registrados en `dispense_log`. El usuario decidió que **los pods son reutilizables**.
+
+**Hecho y probado (mi parte):**
+1. **Pods reutilizables:** `supabase/pod_reload.sql` → función `reload_pod(pod_id)`, que exige sesión con rol. En `api.js`: `reloadPod(podId)` → `{ podId, status: 'ready', changed }`. Sin sesión: "Sign in with a crew account to reload Seed Pods." `reset_demo_pods.sql` ahora deja en `ready` los 4 pods del dispensador.
+2. **Talla y masa:** `supabase/body_metrics.sql` → `user_profiles.height_cm` y `body_mass_kg`. La administradora las carga en Supabase (astronauta demo: 172 cm, 68 kg). En `api.js`:
+   - `data.crew.body = { heightCm, bodyMassKg, bmi, doseFactor, referenceMassKg }`.
+   - `data.crew.ownerName`: **nombre real** del astronauta.
+   - `biometrics.vitals.bodyMass` y `biometrics.vitals.height`, con la misma forma que el resto de vitals (fuente SLAMMD, simulated).
+   - **Porciones ajustadas por masa:** base × masa/70 kg, con tope 0,75×–1,25×, en `prescriptions[]` y `plantCatalog[]`. `dose` queda como "… · adj. 68 kg"; además vienen `doseBase`, `doseFactor` y `doseNote` ("modeled, not clinical dosing"). `dispense_log.dose_given` guarda la porción ajustada.
+3. **Mockup 3D:** `src/components/three/PodVeggie3D.jsx` (Three.js 0.169.0, hecho con código, sin archivos externos, compatible con la CSP). Muestra el Seed Pod bajando y enchufándose en la bandeja de Veggie, con LEDs, fuelle, 5 brotes y anillo de color de la planta. Se gira con mouse o dedo y respeta "reducir movimiento". Se carga aparte (129 KB gzip), así que no agranda la carga inicial.
+
+Pruebas: `api.js` real 13/13 (Astronauta, Doctor e Ingeniero; el Ingeniero no ve la masa del astronauta, como manda RLS), `tests/rls.mjs` 20/20, e2e local con CSP 0 errores y sin desbordes. Captura del 3D verificada.
+
+**@Carol, 3 tareas (tus archivos):**
+
+| # | Tarea | Dónde |
+| --- | --- | --- |
+| 1 | **Botón "Reload pod"** en los pods que no estén `ready` (growing, planted, harvested, empty): `await reloadPod(pod.podId); refresh();`. Texto sugerido: *"Reload pod with vault seeds"*. En el dispensador, cuando haya 0 disponibles, mostrar el botón en lugar de "All available Seed Pods… in cultivation". | `DispenserView.jsx`, `PlantStatusView.jsx` |
+| 2 | **Talla y masa:** agregar `vitals.bodyMass` y `vitals.height` a la lista de signos de Astronaut Data (hoy la lista está fija en la línea ~75). Mostrar `rx.doseNote` debajo de la porción. Usar `data.crew.ownerName` como nombre del astronauta en lugar del perfil local. | `AstronautView.jsx`, `MedicalView.jsx`, `DispenserView.jsx`, `App.jsx` |
+| 3 | **Montar el 3D en Dispenser**, junto al pod seleccionado: `import PodVeggie3D from '../three';` y `<Suspense fallback={null}><PodVeggie3D podId={pod.podId} plantName={pod.plant} accent="#E14D2A" height={300} /></Suspense>`. Ya trae su propio marco, etiqueta y texto accesible. | `DispenserView.jsx` |
