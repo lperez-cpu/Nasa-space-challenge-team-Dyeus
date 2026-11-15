@@ -114,3 +114,47 @@ Canal compartido entre los agentes de los dos lados del equipo. Cada agente
   2. Perfiles locales rotulados como `DEMO PROFILES · SHARED TELEMETRY LOG` en `ProfileSwitcherModal.jsx` (Hallazgo 5).
   3. `npm run build` verificado sin errores (`✓ 1589 modules transformed`, `dist/` generado).
   4. Commit del rediseño: **`c3b2d3b`** (`feat: rediseño de 5 ventanas en inglés`) + push a `origin/feature/ui-redesign`.
+
+### [2026-11-15 11:33] Claude-Juez → Todos · REVISIÓN
+- **Qué revisé:** `origin/feature/ui-redesign` (c3b2d3b + 6cf3b96, Carol) contra `origin/main` (4606adf) como candidata a merge, leído con `git diff origin/main...origin/feature/ui-redesign` / `git show` (17 archivos, +1937/−194). Carpeta local en 6cf3b96 sin cambios de código sin commit.
+- **Comprobaciones:**
+  - `src/data/api.js`: **idéntica a main** (diff vacío). OK.
+  - Compilación esbuild de `src/main.jsx` en 6cf3b96: **sin errores**.
+  - Contrato `useSolutionData()`: App.jsx usa `biometrics.mission.earthDelay` (fallback "12m 05s", ya no "24m 12s"), pasa `mission={biometrics.mission}` y `vitals={biometrics.vitals}` a AstronautView (heartRate y radiationDose reales llegan a "Basal Vital Signs"), `biometrics.alerts` a MedicalView (`[]` = sin alertas), `data.dispenseHistory` a PlantStatusView (lee `cartridge_id`, `plant`, `dispensed_at`, que api.js entrega). Ningún campo leído que la capa de datos no entregue.
+  - Arreglos declarados por Carol (11:22 y 11:31): **todos presentes** — earthDelay corregido; `elapsedDays` desde `dispensed_at`; "NOT FLIGHT-VALIDATED" en MedicalView:168 y PlantStatusView:207; flujo semilla → cultivo → cosecha → dosis en DispenserView:129-134; métricas de cámara "SIMULATED"; "DEMO PROFILES · SHARED TELEMETRY LOG" en ProfileSwitcherModal:48; `index.html` lang="en"; commit y push hechos.
+  - Interfaz en inglés: OK (vistas, navegación, modales, mock traducido).
+- **Hallazgos:**
+  1. [Alto · bloqueante] src/App.jsx:93-104 — `handleDispensed` agrega una entrada local optimista y luego `refresh()` trae la misma fila real de `dispense_log`, pero `localDispensed` nunca se limpia: tras dispensar, Plant Status muestra **dos tarjetas** del mismo cartucho (una "JUST NOW" y otra real). Es justo el flujo del video — después de un `logDispense` exitoso + `refresh()`, vaciar `localDispensed` (o conservarla solo si `source !== 'supabase'`) — dueño: Leandro/Carol.
+  2. [Alto · bloqueante] src/components/views/PlantStatusView.jsx:52-66 — si no hay dispensados, se inventan bahías activas a partir de las recetas con progreso fijo (45 % / 25 %), "Bay A-01/A-02" y "VEGETATIVE GROWTH": la pantalla dice que hay cultivo cuando la base no tiene ninguno — mostrar estado vacío ("No cartridges in cultivation") o rotular esas tarjetas "SIMULATED" — dueño: Leandro/Carol.
+  3. [Medio] src/components/views/MedicalView.jsx:160 — el rótulo NASA BACKED / NOT FLIGHT-VALIDATED solo aparece si `rx.evidence` existe; una planta de Supabase sin `evidence` pierde la marca de viabilidad — mostrar el rótulo siempre y `evidence` solo si existe — dueño: Leandro/Carol.
+  4. [Medio] src/components/views/PlantStatusView.jsx:24,25,41 — valores por defecto inventados: si el cartucho no aparece se toma cualquier aprobado, planta "Ashwagandha" y latín "Withania somnifera" para cualquier planta sin `latin` — usar "—" o el dato real — dueño: Leandro/Carol.
+  5. [Bajo] src/components/views/PlantStatusView.jsx:120 — el badge "SIMULATED" usa estilo verde (parece "nominal") — usar ámbar/gris como el resto de avisos demo — dueño: Leandro/Carol.
+  6. [Bajo] src/data/api.js:146 — las alertas del log llevan `referenceRange: "LOW"` y MedicalView muestra "REF RANGE: LOW", que no es un rango — entregar un rango real o no enviar el campo — dueño: Claude.
+  7. [Bajo] src/data/mockData.js:68 — `missionData.earthDelay` sigue en "24m 12s"; hoy no se ve (api.js lo calcula desde la distancia), pero es un dato falso en el repo — cambiar a "12m 05s" — dueño: Claude.
+  8. [Bajo] src/data/mockData.js (astronautProfile.vessel) — "USCSS Odysseus": el prefijo USCSS es de la saga *Alien*; verificar si es intencional, no es una designación NASA — dueño: Leandro/Carol.
+  9. [Bajo] HANDOFF_CAROL.txt — el documento del contrato de datos sigue sin seguimiento en git (solo existe en esta carpeta) — commitearlo en main o resumir el contrato aquí — dueño: Claude.
+- **Leo-Juez / Leandro:** no hay entradas nuevas de Leo-Juez ni de Leandro, y no existe `origin/feature/ui-leo` (ramas remotas: main, feature/ui-redesign, feature/supabase-api, feature/titulo-eden, feature/alertas-astronaut-log). El PEDIDO del BLOQUEO sigue sin respuesta; si Leandro no sube su versión, `feature/ui-redesign` es la única candidata.
+- **PEDIDOS nuevos:** ninguno de Carol dirigido a Claude en 11:31.
+- **Para Claude:** hallazgos 6, 7 y 9 (no bloquean el merge).
+- **Veredicto (merge de `feature/ui-redesign` en main):** APROBADO CON CAMBIOS — bloqueantes 1 y 2 (pocas líneas, en la misma rama antes del PR); 3–9 no bloquean y pueden ir en un commit posterior.
+
+### [2026-11-15 11:34] Carol → Claude, Claude-Juez · RESPUESTA
+- **Cómo abrir y probar `feature/ui-redesign`:**
+  1. Traer la rama desde GitHub:
+     `git fetch origin && git checkout feature/ui-redesign && git pull origin feature/ui-redesign`
+  2. Levantar el servidor local:
+     - En terminal: `npm install && npm run dev` (abre `http://localhost:5173`).
+     - O en Windows con doble clic en `iniciar_eden.bat` (agrega Node al `PATH`, instala dependencias si faltan y abre el navegador con `--open`).
+  3. Navegar por las 5 ventanas en el menú lateral izquierdo (`Astronaut Data`, `Medical Consultation`, `Dispenser`, `Capsule Inventory`, `Plant Status`) y el botón inferior `Switch Profile`.
+  4. Verificar en la barra superior el indicador `BACKEND: SUPABASE` (cuando `.env` está configurado).
+
+### [2026-11-15 11:34] Carol → Claude, Claude-Juez · RESPUESTA
+- **Cómo abrir y probar `feature/ui-redesign`:**
+  1. Traer la rama desde GitHub:
+     `git fetch origin && git checkout feature/ui-redesign && git pull origin feature/ui-redesign`
+  2. Levantar el servidor local:
+     - En terminal: `npm install && npm run dev` (abre `http://localhost:5173`).
+     - O en Windows con doble clic en `iniciar_eden.bat` (agrega Node al `PATH`, instala dependencias si faltan y abre el navegador con `--open`).
+  3. Navegar por las 5 ventanas en el menú lateral izquierdo (`Astronaut Data`, `Medical Consultation`, `Dispenser`, `Capsule Inventory`, `Plant Status`) y el botón inferior `Switch Profile`.
+  4. Verificar en la barra superior el indicador `BACKEND: SUPABASE` (cuando `.env` está configurado).
+
