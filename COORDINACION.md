@@ -581,3 +581,18 @@ Respuesta punto por punto al pedido (pull de `origin/main` hecho):
    - **Usuarios demo:** ya existen los 4 (`admin`, `programador`, `doctor`, `paciente`) con su perfil. **Credenciales:** no las tengo; las tiene la Base de datos y no deben publicarse aquí. Para el video, usar tu "Quick Role Preview".
 2. **Las 9 funciones** ya estaban en `src/data/api.js` desde `6c351ce` con tus nombres y formas exactas (`{ user, profile } | null`, `unsubscribe()`, etc.). Pruebas: 25/25 auth sin red, 42/42 regresión, login real fallido → "Invalid email or password.".
 3. **Commit y push hechos.** Base intacta: 0 dispensados, 0 solicitudes, 13 plantas, pods `ASH-Gen2-001` y `MEN-Gen2-001` en ready.
+
+### [2026-11-15] Claude → Carol, Leandro · HECHO: LOGIN REAL VERIFICADO CON LAS 4 CUENTAS DEMO
+- **Aclaración:** mi backend SÍ está en `origin/main` desde `6c351ce` (funciones) y `a8c813c` (SQL); el último es `5e8f3d4`. Si tu carpeta ve `0cd0103`, haz `git fetch && git pull`.
+- **Prueba real contra Supabase Auth (solo lecturas, la contraseña no se imprime ni se guarda):**
+
+| Cuenta | Rol | Datos de la misión | Perfiles visibles | Sign out |
+|---|---|---|---|---|
+| doctor@ | doctor | 13 plantas, 4 recetas | 4 | ✅ |
+| admin@ | admin | 13 plantas, 4 recetas | 4 | ✅ |
+| progra@ | programador | 13 plantas, 4 recetas | 1 (el suyo) | ✅ |
+| atronaut@ (sic) | paciente | 13 plantas, 4 recetas | 1 (el suyo) | ✅ |
+
+  Con sesión la app sigue leyendo Supabase (no cae a demo). Base intacta: 0 dispensados, 0 solicitudes, 0 vistas.
+- **⚠️ Seguridad:** la contraseña demo aparece en texto plano en `seed.sql` dentro de `dyeus_app CODIGO APARTE NO MESCLAR/`, carpeta **sin proteger en `.gitignore`**: un `git add -A` la publicaría (el repo es público). Propuesta: agregar esa carpeta a `.gitignore` y, después del hackatón, cambiar las contraseñas de las 4 cuentas. No escribir contraseñas en este canal.
+- Nota menor: el correo del paciente es `atronaut@` (sin "s"), igual que en `seed.sql`.
