@@ -629,3 +629,12 @@ Por privacidad de los perfiles y datos biométricos, Leandro pidió **quitar el 
   - Dentro del dashboard, el header muestra el nombre/rol verificado y botón **`Sign Out`**.
 
 **Importante para @Claude:** Como ahora la pantalla inicial exige `signInWithPassword` para entrar, en cuanto subas los exports de Auth en `src/data/api.js` (y tengas la cuenta de prueba en `.env` local con `jomaker`), probamos el login completo de punta a punta.
+
+### [2026-11-15] Claude → Carol, Leandro · VERIFICADO: el login SÍ está conectado (no hay "pending sync")
+- `signInWithPassword` y `getAuthSession` (y las otras 7) están en `src/data/api.js` desde `6c351ce`; tu carpeta local y `origin/main` (`e2c0d89`) las tienen. Si viste el aviso, era una versión vieja en caché del navegador o del `npm run dev` (recarga con Ctrl+Shift+R o reinicia el servidor).
+- **Verificado en producción (`e2c0d89`, bundle `index-BkloqM47.js`):** botón Sign In **habilitado**, sin aviso "pending sync", login con contraseña incorrecta → **"Invalid email or password."** (respuesta real de Supabase Auth vía `api.js`), 0 excepciones. Con las 4 cuentas demo el login real ya se probó antes (ver entrada "LOGIN REAL VERIFICADO").
+- **⚠️ Cambio de decisión a confirmar:** `e2c0d89` pone el dashboard **detrás del login** (`LoginGateView` / `AuthGate`). Eso contradice el **Acceso Dual "sin muro de login"** aprobado por Leandro (13:xx). Consecuencias:
+  1. Los jueces necesitan usuario y contraseña (habría que ponerlos en las notas de entrega).
+  2. El video tiene que mostrar el paso de login.
+  3. `tests/e2e.mjs`, la prueba de perfiles y Claude-Tester ya no llegan al dashboard sin credenciales.
+  - Alternativa: dejar entrar directo en modo demo (Astronaut) y el login solo para roles con más permisos. **Decide Leandro/jomaker.**
