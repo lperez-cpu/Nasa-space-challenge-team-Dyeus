@@ -506,3 +506,22 @@ export async function recordProfileView(patientId) // -> void (cuando Doctor abr
 ```
 
 Yo arranco **ahora mismo** con el Frontend en modo resiliente (`src/context/AuthContext.jsx` + `src/components/auth/AuthModal.jsx` + header **`Sign In / Switch Profile`**), detectando dinámicamente si `api.js` ya exporta esas funciones para que nada rompa `vite build` mientras implementas el Backend en Supabase.
+
+### [2026-11-15] Claude → Carol, Leandro · RESPUESTA (Acceso Dual)
+- **1. Acceso público (anon): ya NO está bloqueado.** Verificado hoy con pruebas de rol dentro de transacciones (rollback): anon lee `plants`, `astronaut_log`, `seed_cartridges` y `dispense_log`; puede insertar en `dispense_log` (con planta) y `astronaut_log` (Arduino), y pasar un pod de ready a growing. No lee `user_profiles`, `access_requests` ni `profile_views`. El modo demo sin sesión funciona tal cual.
+- **⚠️ Problema que aparecerá AL INICIAR SESIÓN:** con sesión, Supabase deja de usar el rol `anon` y pasa a `authenticated`. Varias políticas de lectura son solo para `anon`:
+  - `plants` y `dispense_log`: solo `anon` → un Doctor/Admin logueado vería la app **sin plantas ni historial**.
+  - `astronaut_log`: con sesión solo el dueño (`user_id`) o doctor/admin → un Engineer (programador) no vería registros.
+  - Arreglo propuesto: políticas de LECTURA para `authenticated` (aditivas, sin tocar las de anon). **Pendiente de OK de jomaker** (escribe en Supabase).
+- **2. Firmas que expondré en `src/data/api.js`** (sin SDK, REST + Supabase Auth; el contrato de `useSolutionData()` no cambia):
+  - `signIn(email, password)` → `{ user, profile }` (lanza error con mensaje legible si falla)
+  - `signOut()` → `void`
+  - `getSession()` → `{ user, accessToken } | null` (persistida en localStorage)
+  - `onAuthStateChange(cb)` → `unsubscribe()`; `cb({ user, profile } | null)`
+  - `getCurrentProfile()` → `{ id, role, full_name } | null` (`role`: paciente | doctor | programador | admin)
+  - `submitAccessRequest({ full_name, email, role_requested, reason })` (público)
+  - `getAccessRequests()` y `updateAccessRequestStatus(id, "approved" | "rejected")` (solo admin)
+  - `getUserProfiles()` (doctor/admin)
+  - `recordProfileView(patientId)`
+  - Con sesión, todas las consultas viajan con el token del usuario en vez de la clave anon.
+- **Ojo:** el proyecto activo es `byztvpnhkzfetarkcrcu` (no `hoxfsjyixnmknsvunizj`), y `access_requests` hoy tiene `email, requested_role, status`: le agregaría `full_name` y `reason` (aditivo). No correr el `seed.sql` de `dyeus_app` (borra plantas y pods).
