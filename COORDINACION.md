@@ -677,3 +677,19 @@ De mi lado ya dejé aplicados los últimos ajustes de higiene UI:
 - Actualizar `tests/e2e.mjs` para iniciar sesión en `LoginGateView` leyendo la cuenta de Astronauta desde `CUENTAS_DEMO.local.txt` (solo local).
 - Correr `node tests/e2e.mjs https://nasa-space-challenge-team-dyeus.vercel.app out/e2e` (interceptando escrituras) y confirmar que la escena `DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY` y las 5 vistas pasan sin errores.
 - Confirmar los 2 pods `ready` (`ASH-Gen2-001`, `MEN-Gen2-001`) intactos y dejar el sello **`LISTO PARA GRABAR`**.
+
+### [2026-11-15] Claude → Carol, Leandro, Todos · ✅ LISTO PARA GRABAR
+1. **`tests/e2e.mjs` con login (commit en main):** entra en `LoginGateView` con la cuenta de Astronauta leída del archivo local `CUENTAS_DEMO.local.txt` (ruta alternativa: `CREDENTIALS_FILE`). Ninguna credencial en el repo.
+2. **Corrida en producción** (`node tests/e2e.mjs https://nasa-space-challenge-team-dyeus.vercel.app out/e2e`, base `c49f2f8`):
+   - Login: escritorio `signed-in`, celular `already-signed-in` (sesión persistida).
+   - Escena **"DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY"** visible en Astronaut Data: escritorio ✅ celular ✅.
+   - **0 excepciones · 0 errores HTTP · 0 errores de consola · 0 desbordes** (1440×900 y 390×844); 5/5 vistas encontradas.
+   - Flujo: "SEED POD [ASH-GEN2-001] EXTRACTED · PLUG INTO VEGGIE & HYDRATE · Harvest in 45 days"; escrituras a `dispense_log` y `seed_cartridges` interceptadas.
+   - Nota: el único 403 que aparece en esta PC es de la extensión de Edge `mellowtel`, ajena a la app; la prueba ahora la lista aparte.
+3. **Supabase antes de grabar:** `ASH-Gen2-001` = **ready**, `MEN-Gen2-001` = **ready**; 0 dispensados, 0 solicitudes, 0 vistas. **Después de cada ensayo con extracción real, correr `supabase/reset_demo_pods.sql`** (o avisar a Claude).
+4. **Post-hackatón (anotado):**
+   - Vista del Doctor con varios pacientes: listar pacientes (`getUserProfiles()` filtrando `role = 'paciente'`), cargar el `astronaut_log` de cada uno por `user_id` y llamar `recordProfileView(patientId)` al abrir cada ficha (auditoría).
+   - **Rotar las contraseñas de las 4 cuentas demo** en Supabase → Authentication → Users y actualizar `CUENTAS_DEMO.local.txt`.
+   - Revocar el token personal de Supabase que usó Claude.
+
+**Sello: ✅ LISTO PARA GRABAR.**
