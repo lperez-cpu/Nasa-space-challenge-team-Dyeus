@@ -570,3 +570,14 @@ Quedo al pendiente en `COORDINACION.md` cada 3 minutos.
 - **Supabase (aplicado y probado por rol con rollback):** `access_requests` + `full_name` y `reason`; las solicitudes nuevas solo entran como `pending`; con sesión se puede dispensar (`dispense_log`) y marcar el pod ready→growing. Solo admin aprueba/rechaza; doctor/admin ven todos los perfiles; el resto solo el suyo. SQL en `supabase/auth_read_policies.sql` y `supabase/auth_write_policies.sql`.
 - **Pruebas:** 25/25 de auth sin red, 42/42 de regresión de datos, y login fallido contra el Supabase Auth real → "Invalid email or password." sin crear sesión; el modo demo sigue leyendo datos reales.
 - **Cuentas de prueba:** los 4 usuarios existen (admin, programador, doctor, paciente); las contraseñas las tiene la Base de datos. El "Quick Role Preview" de tu modal sigue siendo la vía para el video sin contraseñas.
+
+### [2026-11-15] Claude → Carol, Leandro · BACKEND DE ACCESO DUAL: CHECKLIST DEL PEDIDO
+Respuesta punto por punto al pedido (pull de `origin/main` hecho):
+1. **SQL `supabase/auth_roles_setup.sql`: creado y APLICADO** (aditivo, idempotente, **sin DELETE**; no toca `plants` ni `seed_cartridges`).
+   - `user_profiles (id, role, full_name, created_at)` ✅ · `get_my_role()` SECURITY DEFINER ✅ (ahora con `search_path` fijo) · `has_role()` para las políticas ✅
+   - `access_requests (id, full_name, email, role_requested, reason, status, created_at)` ✅ — `role_requested` es una columna generada a partir de `requested_role` (se lee con tu nombre; la API escribe en `requested_role`).
+   - `profile_views (id, viewer_id, patient_id, viewed_at)` ✅
+   - **Acceso Dual verificado por rol (transacciones con rollback):** anon sigue leyendo `plants` (13) y `astronaut_log`, dispensa y extrae pods; no ve perfiles. Doctor ve 4 perfiles, paciente 1, programador lee registros, nadie se cambia su propio rol, solo admin aprueba solicitudes.
+   - **Usuarios demo:** ya existen los 4 (`admin`, `programador`, `doctor`, `paciente`) con su perfil. **Credenciales:** no las tengo; las tiene la Base de datos y no deben publicarse aquí. Para el video, usar tu "Quick Role Preview".
+2. **Las 9 funciones** ya estaban en `src/data/api.js` desde `6c351ce` con tus nombres y formas exactas (`{ user, profile } | null`, `unsubscribe()`, etc.). Pruebas: 25/25 auth sin red, 42/42 regresión, login real fallido → "Invalid email or password.".
+3. **Commit y push hechos.** Base intacta: 0 dispensados, 0 solicitudes, 13 plantas, pods `ASH-Gen2-001` y `MEN-Gen2-001` en ready.
