@@ -9,6 +9,7 @@ const CHAMBER_METRICS = [
 
 export default function PlantStatusView({
   prescriptions = [],
+  plantCatalog = [],
   seedVault = [],
   dispenseHistory = [],
   localDispensed = [],
@@ -19,10 +20,10 @@ export default function PlantStatusView({
   const activeCultures = allDispenses.map((entry, idx) => {
     const cart = seedVault.find((c) => c.id === entry.cartridge_id);
     const plantName = entry.plant || cart?.plant || '—';
-    const plantInfo = prescriptions.find(
-      (p) => p.plant?.toLowerCase() === plantName.toLowerCase(),
-    );
-    const totalDays = plantInfo?.harvestDays || 21;
+    const plantInfo =
+      prescriptions.find((p) => p.plant?.toLowerCase() === plantName.toLowerCase()) ||
+      plantCatalog.find((p) => p.plant?.toLowerCase() === plantName.toLowerCase());
+    const totalDays = entry.harvestDays || plantInfo?.harvestDays || 21;
     const msElapsed = entry.dispensed_at
       ? Math.max(0, Date.now() - new Date(entry.dispensed_at).getTime())
       : 0;

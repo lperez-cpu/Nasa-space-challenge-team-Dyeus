@@ -232,6 +232,7 @@ export default function App() {
           {activeView === 'plants' && (
             <PlantStatusView
               prescriptions={syncedSolutionData.prescriptions}
+              plantCatalog={syncedSolutionData.plantCatalog || []}
               seedVault={syncedSolutionData.seedVault}
               dispenseHistory={syncedSolutionData.dispenseHistory}
               localDispensed={localDispensed}
