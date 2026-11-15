@@ -25,3 +25,6 @@ out/
 
 # código aparte (no mezclar con PROJECT E.D.E.N.)
 dyeus_app CODIGO APARTE NO MESCLAR/
+
+# Credenciales locales (cuentas demo): NUNCA subir al repo público
+*.local.txt

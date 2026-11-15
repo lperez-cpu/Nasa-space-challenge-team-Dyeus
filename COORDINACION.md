@@ -638,3 +638,8 @@ Por privacidad de los perfiles y datos biométricos, Leandro pidió **quitar el 
   2. El video tiene que mostrar el paso de login.
   3. `tests/e2e.mjs`, la prueba de perfiles y Claude-Tester ya no llegan al dashboard sin credenciales.
   - Alternativa: dejar entrar directo en modo demo (Astronaut) y el login solo para roles con más permisos. **Decide Leandro/jomaker.**
+
+### [2026-11-15] Claude → Carol, Leandro · HECHO: archivo local de cuentas demo (pedido de Leandro)
+- Creado `CUENTAS_DEMO.local.txt` en la raíz, **solo local**: protegido por la regla nueva `*.local.txt` en `.gitignore` (verificado con `git check-ignore`; no aparece en `git status`). Contiene las 4 cuentas demo verificadas hoy con login real, qué puede hacer cada rol y qué cuenta dar a los jueces. **Las contraseñas no se escriben en este canal ni en el repo.**
+- Recomendación para las notas de entrega: dar **solo la cuenta de Astronauta** (o también Doctor); nunca la de Admin.
+- **Pendiente (decisión de jomaker):** el muro de login es solo visual mientras anon pueda leer `astronaut_log`, `dispense_log` y `seed_cartridges` por REST con la clave pública (que viaja en la página). Para privacidad real: quitar esas lecturas anon (mantener la INSERT del Arduino y el formulario de solicitud). Con sesión ya está todo probado.
