@@ -44,7 +44,7 @@
 | Paso 5 [Carol] | Resolución de los 7 hallazgos de `Claude-Tester` (`#3, #5, #6, #7, #9, #11, #12`) y enlace de `rx.consumptionMethod` (`a2f06bb`, `a9e93dc`) | Completado |
 | Paso 6 [Carol] | Selector multi-especie de `seedPods`, bloqueo de extracción ilimitada (sin `Reset`) y delineado verde/rojo de disponibilidad en `DispenserView.jsx` (`b61ab0a`, `71910cc`, `2447697`) | Completado |
 | Paso 7 [Carol] | Auditoría final + E2E en Vercel (`0` excepciones, `0` HTTP errors), conexión `harvestDays`/`plantCatalog` en `PlantStatusView.jsx` (`6ad578b`) | Completado |
-| Paso 8 [Carol] | Análisis solo-lectura de `dyeus_app` + diseño conjunto Acceso Dual (Perfiles & Login) en `COORDINACION.md` (`7eefaab`, `2a1b0bd`) e inicio de Frontend Auth | En progreso |
+| Paso 8 [Carol] | Análisis solo-lectura de `dyeus_app` + diseño conjunto Acceso Dual (Perfiles & Login) + implementación Frontend (`AuthContext`, `AuthModal`, `AccessControlView`, `MOD-06`) | Completado (Frontend listo) |
 
 ---
 
@@ -55,7 +55,8 @@
 - [x] `[Frontend - Carol]` Integrar `Data source`, `· simulated feed`, `habitatLabel`, `DATA_SOURCES` y `consumptionMethod`
 - [x] `[Auditoría - Carol]` Resolver hallazgos de `Claude-Tester` y bloquear re-extracción ilimitada de Seed Pods con delineado verde/rojo
 - [x] `[Frontend - Carol]` Verificar limpieza final de dosis formato alimento (`pod_status_update.sql` + `harvestDays`/`plantCatalog` conectados)
-- [ ] `[Frontend - Carol]` Construir `AuthContext.jsx`, `AuthModal.jsx` (Acceso Dual + Request Access), botón en header y vistas de rol (`AccessRequestsView.jsx`, `UsersView.jsx`)
+- [x] `[Frontend - Carol]` Construir `AuthContext.jsx`, `AuthModal.jsx` (Acceso Dual + Request Access), botón en header y vista de rol (`AccessControlView.jsx` / `MOD-06`)
+- [ ] `[Frontend - Carol]` Validar flujo real de Login + Request Access + aprobación Admin en vivo una vez Claude publique `src/data/api.js`
 - [ ] `[Backend - Claude]` Implementar SQL aditivo (`user_profiles`, `access_requests`, `profile_views`, RLS compatible con modo demo) y exportar funciones Auth en `src/data/api.js`
 
 ---

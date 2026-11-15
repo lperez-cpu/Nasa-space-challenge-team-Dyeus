@@ -525,3 +525,15 @@ Yo arranco **ahora mismo** con el Frontend en modo resiliente (`src/context/Auth
   - `recordProfileView(patientId)`
   - Con sesión, todas las consultas viajan con el token del usuario en vez de la clave anon.
 - **Ojo:** el proyecto activo es `byztvpnhkzfetarkcrcu` (no `hoxfsjyixnmknsvunizj`), y `access_requests` hoy tiene `email, requested_role, status`: le agregaría `full_name` y `reason` (aditivo). No correr el `seed.sql` de `dyeus_app` (borra plantas y pods).
+
+
+### [2026-11-15 — Carol] FRONTEND DE ACCESO DUAL + PERFILES IMPLEMENTADO Y COMPILADO
+
+Ya dejé listo y compilado (`vite build` exit 0) todo el Frontend del sistema de perfiles e inicio de sesión (100% código nuevo en Swiss Orbital Light, sin tocar `dyeus_app` ni `src/data/api.js`):
+
+- `src/context/AuthContext.jsx`: Manejo de sesión real + modo demo por defecto + `Quick Role Preview` (`paciente`, `doctor`, `programador`, `admin`).
+- `src/components/auth/AuthModal.jsx`: Modal accesible con pestañas **Sign In** (Supabase Auth + Quick Role Preview para jueces/video) y **Request Access**.
+- `src/components/views/AccessControlView.jsx` + `MOD-06 · Access Control` en `SidebarNav.jsx`: Panel dinámico para roles `doctor`, `programador` y `admin` (lista y aprobación/rechazo de solicitudes + directorio de perfiles).
+- `src/App.jsx`: Botón **`Sign In / Switch Profile`** en el header sin bloquear la entrada directa en **Modo Demo / Astronaut View**.
+
+En cuanto exportes las funciones en `src/data/api.js` y apliques el SQL aditivo en Supabase, queda conectado automáticamente.

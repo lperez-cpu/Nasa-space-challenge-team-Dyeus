@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Menu } from 'lucide-react';
+import { KeyRound, Menu } from 'lucide-react';
+import AuthModal from './components/auth/AuthModal';
 import NewProfileModal from './components/NewProfileModal';
 import ProfileSwitcherModal from './components/ProfileSwitcherModal';
-import SidebarNav, { NAV_WINDOWS } from './components/SidebarNav';
+import SidebarNav, { getNavWindows } from './components/SidebarNav';
+import AccessControlView from './components/views/AccessControlView';
 import AstronautView from './components/views/AstronautView';
 import DispenserView from './components/views/DispenserView';
 import InventoryView from './components/views/InventoryView';
 import MedicalView from './components/views/MedicalView';
 import PlantStatusView from './components/views/PlantStatusView';
+import { AuthProvider, MISSION_ROLES, useAuth } from './context/AuthContext';
 import { DATA_SOURCES, logDispense, useSolutionData } from './data/api';
 import { astronautProfile } from './data/mockData';
 
@@ -25,7 +28,8 @@ function loadStoredProfiles() {
   }
 }
 
-export default function App() {
+function AppContent() {
+  const { activeRole, isAuthenticated } = useAuth();
   const { data: solutionData, biometrics, source, loading, refresh } = useSolutionData();
   const [profiles, setProfiles] = useState(loadStoredProfiles);
   const [activeProfileId, setActiveProfileId] = useState(
@@ -33,6 +37,7 @@ export default function App() {
   );
 
   const [activeView, setActiveView] = useState('astronaut');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [localDispensed, setLocalDispensed] = useState([]);
   const [extractedPodIds, setExtractedPodIds] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -117,8 +122,19 @@ export default function App() {
     refresh();
   };
 
+  const navWindows = useMemo(() => getNavWindows(activeRole), [activeRole]);
+
+  useEffect(() => {
+    if (activeView === 'access' && !['doctor', 'programador', 'admin'].includes(activeRole)) {
+      setActiveView('astronaut');
+    }
+  }, [activeRole, activeView]);
+
+  const activeRoleMeta =
+    MISSION_ROLES.find((r) => r.id === activeRole) || MISSION_ROLES[0];
+
   const currentWindowMeta =
-    NAV_WINDOWS.find((w) => w.id === activeView) || NAV_WINDOWS[0];
+    navWindows.find((w) => w.id === activeView) || navWindows[0];
   const alertsCount = Array.isArray(biometrics.alerts) ? biometrics.alerts.length : 0;
 
   return (
@@ -128,6 +144,7 @@ export default function App() {
         activeView={activeView}
         onSelectView={setActiveView}
         activeProfile={activeProfile}
+        activeRole={activeRole}
         alertsCount={alertsCount}
         onOpenProfileSwitcher={() => setIsSwitcherOpen(true)}
         isMobileOpen={isMobileMenuOpen}
@@ -161,12 +178,12 @@ export default function App() {
               </div>
             </div>
 
-            <div className="hidden items-center gap-2 font-mono text-[11px] sm:flex">
-              <span className="rounded-md border border-slate-200 bg-[#F8FAFC] px-2.5 py-1 font-medium text-slate-700 tabular-nums">
+            <div className="flex items-center gap-2 font-mono text-[11px]">
+              <span className="hidden rounded-md border border-slate-200 bg-[#F8FAFC] px-2.5 py-1 font-medium text-slate-700 tabular-nums lg:inline-flex">
                 DELAY: {biometrics.mission?.earthDelay || '12m 05s'}
               </span>
               <span
-                className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-semibold ${
+                className={`hidden items-center gap-1.5 rounded-md border px-2.5 py-1 font-semibold sm:flex ${
                   source === 'supabase'
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
                     : 'border-sky-200 bg-sky-50 text-sky-800'
@@ -187,6 +204,24 @@ export default function App() {
                     ? 'BACKEND: SUPABASE'
                     : 'TELEMETRY: DEMO'}
               </span>
+
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-[#E14D2A] ${
+                  isAuthenticated
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                    : 'border-slate-300 bg-white text-[#0F172A] hover:border-[#E14D2A]'
+                }`}
+              >
+                <KeyRound className="h-3.5 w-3.5 text-[#E14D2A]" />
+                <span className="hidden sm:inline">
+                  {isAuthenticated ? activeRoleMeta.badge : 'Sign In / Switch Profile'}
+                </span>
+                <span className="sm:hidden">
+                  {isAuthenticated ? activeRoleMeta.badge : 'Sign In'}
+                </span>
+              </button>
             </div>
           </div>
         </header>
@@ -239,6 +274,8 @@ export default function App() {
               dataSource={source}
             />
           )}
+
+          {activeView === 'access' && <AccessControlView />}
         </main>
 
         <footer className="mx-auto w-full max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
@@ -282,6 +319,19 @@ export default function App() {
         onCreate={handleCreateProfile}
         existingIds={profiles.map((p) => p.id)}
       />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

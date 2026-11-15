@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   FlaskConical,
   HeartPulse,
+  KeyRound,
   Leaf,
   ShieldCheck,
   Stethoscope,
@@ -47,15 +48,33 @@ export const NAV_WINDOWS = [
   },
 ];
 
+export function getNavWindows(activeRole = 'paciente') {
+  if (['doctor', 'programador', 'admin'].includes(activeRole)) {
+    return [
+      ...NAV_WINDOWS,
+      {
+        id: 'access',
+        code: 'MOD-06',
+        label: 'Access Control',
+        description: 'Crew roles & access requests',
+        icon: KeyRound,
+      },
+    ];
+  }
+  return NAV_WINDOWS;
+}
+
 export default function SidebarNav({
   activeView,
   onSelectView,
   activeProfile,
+  activeRole = 'paciente',
   alertsCount = 0,
   onOpenProfileSwitcher,
   isMobileOpen = false,
   onCloseMobile,
 }) {
+  const navItems = getNavWindows(activeRole);
   const handleNavClick = (viewId) => {
     onSelectView(viewId);
     onCloseMobile?.();
@@ -109,7 +128,7 @@ export default function SidebarNav({
             Control Modules
           </p>
 
-          {NAV_WINDOWS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
             const showAlertBadge = item.id === 'medical' && alertsCount > 0;
