@@ -60,11 +60,10 @@ Crew health data is private, so the whole dashboard requires sign-in (Supabase A
 | Add or reset pods | — | — | yes | yes | yes |
 | Dispense history | — | read, add | read, add | read, add | read, add |
 | Access requests | submit (`pending` only) | submit | submit | submit | review and approve |
-| Create accounts with a role | — | — | — | — | yes (server-side) |
 | Who viewed my record (`profile_views`) | — | yes | yes | yes | yes |
 
-- **Nobody can change their own role.** `user_profiles` has no update policy. Self sign-up (*New User*) always creates an astronaut account, and a database trigger ignores any role sent by the client.
-- **Admin account creation** runs in a Supabase Edge Function (`provision-user`). It checks that the caller is an admin, and the service key lives only on the server.
+- **No public sign-up.** Accounts are created only by the team's database administrator in Supabase, and public registration is disabled.
+- **Nobody can change their own role.** `user_profiles` has no update policy, and a database trigger gives every new account the astronaut role, ignoring any role sent by the client.
 - **An account without a role sees nothing.** Reading the vault, the dispense history and extracting pods all require a role.
 - **Defense in depth.** The public key has no table write privileges except the two it needs. No role can `TRUNCATE`. The site sends a strict Content-Security-Policy (scripts only from its own origin, network only to Supabase), plus `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy` and `Permissions-Policy` (see [`vercel.json`](vercel.json)).
 - **Audit trail.** Opening a crew member's record from the doctor view is logged in `profile_views`, and the patient can see it.
@@ -73,11 +72,13 @@ Crew health data is private, so the whole dashboard requires sign-in (Supabase A
 
 ### New users
 
-There are three ways to get an account:
+Accounts are not created from this app. The team's database administrator manages them in Supabase:
 
-1. ***New User*** on the sign-in screen. You get an astronaut account right away.
-2. ***Request Access*** for another role. An admin approves the request in Access Control.
-3. **An admin creates the account** with any role from Access Control (*Add New Crew User*).
+1. Create the user in *Authentication → Users → Add user*.
+2. The `handle_new_user` trigger gives the account a profile with the astronaut role.
+3. To give it another role, change `role` in the `user_profiles` table (`doctor`, `programador` or `admin`).
+
+The person then signs in to the dashboard with that email and password. To ask for an account, use *Request Access* on the sign-in screen.
 
 ## Feasibility
 
@@ -134,7 +135,7 @@ Database setup lives in [`supabase/`](supabase/), applied in this order:
 
 The other files:
 
-- `functions/provision-user/`: Edge Function for admin account creation.
+- `functions/provision-user/`: optional Edge Function for admin account creation (not used by the app).
 - `plantas_iss.sql`: NASA-grown crops.
 - `reset_demo_pods.sql`: resets the demo Seed Pods after a rehearsal.
 
@@ -190,7 +191,7 @@ Both tests read the demo account from a local `CUENTAS_DEMO.local.txt` (or the p
 AI tools were used as thought partners and coding assistants during the 48-hour hackathon; the team made the final decisions.
 
 - **Gemini (Google):** brainstorming the Living Pharmacy concept, structuring documents, refining the pitch, and building the multi-window interface and sign-in screen (via an AI coding agent).
-- **Claude / Claude Code (Anthropic):** the Supabase data layer and authentication (`src/data/api.js`), database security policies, the account-creation Edge Function, the Arduino bridge, backups, security and end-to-end tests, and code review.
+- **Claude / Claude Code (Anthropic):** the Supabase data layer and authentication (`src/data/api.js`), database security policies, the Arduino bridge, backups, security and end-to-end tests, and code review.
 
 ## Team
 

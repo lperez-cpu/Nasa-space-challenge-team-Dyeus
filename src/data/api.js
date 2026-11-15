@@ -665,59 +665,11 @@ export async function recordProfileView(patientId) {
   }).catch((err) => console.warn("[E.D.E.N.] No se pudo registrar la vista de perfil:", err));
 }
 
-const validEmail = (email) => {
-  const mail = String(email ?? "").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) throw new Error("A valid email is required.");
-  return mail;
-};
-
-/**
- * Registro propio (pestaña "New User"). La cuenta entra SIEMPRE como 'paciente': lo fija el trigger
- * handle_new_user (supabase/signup_trigger.sql), que ignora cualquier rol enviado por el cliente.
- * Devuelve { user, profile, session } con la sesión ya iniciada; si el proyecto exigiera confirmar el
- * correo, devuelve { user, profile: null, session: null, needsConfirmation: true }.
- */
-export async function signUpCrew({ full_name, email, password } = {}) {
-  if (!supabaseEnabled) throw new Error("Supabase is not configured.");
-  const mail = validEmail(email);
-  if (!password || password.length < 6) throw new Error("Password must be at least 6 characters.");
-  const d = await authRequest("signup", {
-    body: { email: mail, password, data: { full_name: String(full_name ?? "").trim().slice(0, 120) } },
-  }).catch((err) => {
-    if (/already registered|already exists/i.test(err.message)) throw new Error("This email already has an account. Use Sign In.");
-    throw err;
-  });
-  if (!d.access_token) {
-    const u = d.user ?? d;
-    return { user: u?.id ? { id: u.id, email: u.email } : null, profile: null, session: null, needsConfirmation: true };
-  }
-  authSession = fromTokenResponse(d);
-  const profile = await getCurrentProfile();
-  setAuthSession({ ...authSession, profile });
-  return { ...publicSession(), session: { expires_at: authSession.expires_at } };
-}
-
-/**
- * Alta por Admin desde MOD-06 con cualquier rol. Llama a la Edge Function `provision-user`
- * (supabase/functions/provision-user), que guarda la clave service_role del lado del servidor y
- * comprueba que quien llama es admin. Devuelve { user, profile }.
- */
-export async function provisionUserAccount({ full_name, email, password, role } = {}) {
-  if (!supabaseEnabled) throw new Error("Supabase is not configured.");
-  const mail = validEmail(email);
-  if (!password || password.length < 6) throw new Error("Password must be at least 6 characters.");
-  if (!ROLES.includes(role)) throw new Error(`Role must be one of: ${ROLES.join(", ")}.`);
-  const token = await userAccessToken();
-  if (!token) throw new Error("Sign in as an admin to create crew accounts.");
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/provision-user`, {
-    method: "POST",
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ full_name: String(full_name ?? "").trim().slice(0, 120), email: mail, password, role }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || data.message || `Account provisioning failed (${res.status}).`);
-  return data;
-}
+// Alta de usuarios: NO se hace desde esta app. Las cuentas las administra el equipo de base de datos
+// en Supabase (Authentication → Add user); el registro público está desactivado (disable_signup).
+// El trigger handle_new_user (supabase/signup_trigger.sql) crea su perfil 'paciente' y el rol se
+// cambia en la tabla user_profiles. Como signUpCrew/provisionUserAccount no se exportan, la interfaz
+// oculta sola la pestaña "New User" y el panel "Add New Crew User".
 
 // ── Vista Doctor multipaciente e historial de signos ──
 // RLS decide qué se ve: doctor/admin ven a todos los astronautas; un paciente solo a sí mismo.
