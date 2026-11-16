@@ -862,3 +862,30 @@ Pruebas: `api.js` real 13/13 (Astronauta, Doctor e Ingeniero; el Ingeniero no ve
 | 1 | **Botón "Reload pod"** en los pods que no estén `ready` (growing, planted, harvested, empty): `await reloadPod(pod.podId); refresh();`. Texto sugerido: *"Reload pod with vault seeds"*. En el dispensador, cuando haya 0 disponibles, mostrar el botón en lugar de "All available Seed Pods… in cultivation". | `DispenserView.jsx`, `PlantStatusView.jsx` |
 | 2 | **Talla y masa:** agregar `vitals.bodyMass` y `vitals.height` a la lista de signos de Astronaut Data (hoy la lista está fija en la línea ~75). Mostrar `rx.doseNote` debajo de la porción. Usar `data.crew.ownerName` como nombre del astronauta en lugar del perfil local. | `AstronautView.jsx`, `MedicalView.jsx`, `DispenserView.jsx`, `App.jsx` |
 | 3 | **Montar el 3D en Dispenser**, junto al pod seleccionado: `import PodVeggie3D from '../three';` y `<Suspense fallback={null}><PodVeggie3D podId={pod.podId} plantName={pod.plant} accent="#E14D2A" height={300} /></Suspense>`. Ya trae su propio marco, etiqueta y texto accesible. | `DispenserView.jsx` |
+
+
+### [2026-11-15 — Claude] CAMBIO DE ROLES (decisión del usuario): Claude toma la interfaz, @Carol pasa a ser JUEZA
+
+El usuario decidió que **Claude termina la interfaz** y que **Carol revisa como jueza** lo que haga Claude: no edita archivos, revisa y reporta en este canal.
+
+**Ya publicado por Claude (UI), probado en local con la CSP de producción (e2e 0 errores, sin desbordes en escritorio ni celular):**
+- **Dispenser:**
+  - Aparecen los 6 pods con su estado real (READY, GROWING, PLANTED, HARVESTED, EMPTY).
+  - Los que no están listos tienen el botón **"Reload pod [ID] with vault seeds"** (pods reutilizables, `reloadPod`).
+  - El **modelo 3D** Pod → Veggie se ve debajo del pod seleccionado (carga diferida).
+  - La viabilidad se rotula "SEED VIABILITY · MODELED".
+  - Debajo de la porción aparece la nota del ajuste por masa corporal.
+- **Astronaut Data:** muestra el **nombre real** de la cuenta (`user_profiles.full_name`) y las tarjetas de **Body Mass** (68 kg) y **Height** (172 cm, BMI 23).
+- **Medical:** debajo de cada porción aparece `doseNote` ("modeled, not clinical dosing").
+- **Seed Pod Vault:** "Authorized" en lugar de "DNA Authorized" y "VIABILITY · MODELED". Las etiquetas de la demo dicen "WITHIN / OVER DOSE LIMIT" (es un modelo por dosis, no una medición de ADN).
+- `tests/e2e.mjs` ahora también prueba **Reload pod** (interceptado) y verifica que se vea el 3D.
+
+**@Carol, como jueza, revisá por favor (en https://nasa-space-challenge-team-dyeus.vercel.app, cuenta Astronauta):**
+1. Que Dispenser sea claro para alguien que lo ve por primera vez: estados de los pods, botón Reload y el 3D.
+2. Textos en inglés: tono, errores y si algo suena exagerado frente a lo que la NASA realmente tiene.
+3. Celular (390 px): que nada se corte.
+4. Cualquier dato que te parezca inventado o sin fuente.
+
+Reportá hallazgos aquí con prioridad (alta / media / baja). Claude los corrige.
+
+⚠️ **Pendiente:** en la carpeta compartida siguen **5 archivos tuyos sin subir** (`LoginGateView`, `AccessControlView`, `NewProfileModal`, `ProfileSwitcherModal`, `PROJECT_STATUS`: ayuda de nuevo usuario, feedback de MOD-06, IDs y scroll). Claude no los sube por vos. Que **vos o Leandro** decidan si se suben tal cual. Ojo: la guía "How do I create a new user?" todavía menciona *New User* y *Admin Provisioning*, que ya no existen.
