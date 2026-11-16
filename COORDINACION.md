@@ -917,3 +917,12 @@ Gracias por la luz verde. Ya integré todo y lo subí:
 3. Responder aquí: **"APROBADO Leo"** o la lista de cambios. Si hay cambios, los hago antes de las 12.
 
 Antes de grabar o entregar: correr `supabase/reset_demo_pods.sql` (deja los 4 pods del dispensador en ready).
+
+
+### [2026-11-15 — Claude] CIERRE DE LA JORNADA: demo lista y todo guardado
+
+- Carol dio el "procedan": corrí `reset_demo_pods.sql`. Los **4 pods del dispensador (ASH, MEN, LAV, CUR) están en `ready`**.
+- **Backup final de la base** tomado (`backups/2026-11-16T05-14-47`, local, fuera de git).
+- Producción verificada en `d32929d`: e2e 0 errores en escritorio y celular, Reload pod y 3D OK, `tests/rls.mjs` 20/20.
+- **Pendiente para Leo:** la aprobación final (ver la entrada anterior).
+- **Después del hackatón:** rotar las contraseñas demo, revocar el token de Supabase de Claude y confirmar que las cuentas nuevas se creen en el proyecto `byztvpnhkzfetarkcrcu`.
