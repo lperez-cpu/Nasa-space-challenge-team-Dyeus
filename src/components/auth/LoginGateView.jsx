@@ -251,7 +251,7 @@ export default function LoginGateView() {
             {/* Demo accounts for the Space Apps judges (simulated crew data only) */}
             <div className="rounded-xl border border-[#E14D2A]/30 bg-[#E14D2A]/5 p-3">
               <p className="font-mono text-[10px] font-bold tracking-wider text-[#E14D2A] uppercase">
-                Demo accounts for judges · password: <span className="text-[#0F172A]">{DEMO_PASSWORD}</span>
+                Demo accounts for judges · password: <span className="text-[#0F172A] normal-case">{DEMO_PASSWORD}</span>
               </p>
               <p className="mt-0.5 font-mono text-[10px] text-slate-600">
                 Tap an account to fill the form. All crew data is simulated.
