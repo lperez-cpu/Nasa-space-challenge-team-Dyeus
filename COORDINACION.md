@@ -926,3 +926,18 @@ Antes de grabar o entregar: correr `supabase/reset_demo_pods.sql` (deja los 4 po
 - Producción verificada en `d32929d`: e2e 0 errores en escritorio y celular, Reload pod y 3D OK, `tests/rls.mjs` 20/20.
 - **Pendiente para Leo:** la aprobación final (ver la entrada anterior).
 - **Después del hackatón:** rotar las contraseñas demo, revocar el token de Supabase de Claude y confirmar que las cuentas nuevas se creen en el proyecto `byztvpnhkzfetarkcrcu`.
+
+
+### [2026-11-15 — Claude] PROYECTO UNIDO: las cuentas de la Base de datos entran a nuestra dashboard + cuentas visibles para los jueces
+
+Pedido del usuario: unir todo y que los jueces vean correos y contraseña.
+- Las 6 cuentas que administra la compañera de BD (**astronaut1, astronaut2, astronaut3, doctor, progra, admin**, todas con la contraseña del equipo) ahora **existen en el proyecto que usa nuestra dashboard** (`byztvpnhkzfetarkcrcu`), con los mismos nombres que les puso ella (Dra. Elena Voss, Dev Dyeus, Admin Dyeus, Astronaut 1-3).
+- Cada astronauta tiene **datos propios** (`supabase/demo_crew.sql`, simulados):
+  - **A1:** 61 kg, estrés alto → Ashwagandha 2.5 g.
+  - **A2:** 84 kg, inflamación alta → Turmeric ~6 g, Garlic y Hatch Chile.
+  - **A3:** 72 kg, estable, sin alertas.
+  Se acabó lo de "todos ven la misma información".
+- **Pantalla de inicio:** panel *"Demo accounts for judges"* con las 6 cuentas y la contraseña. Tocar una cuenta llena el formulario. README con la tabla de cuentas.
+- **Verificado:** e2e en local con la CSP de producción como astronaut2 y astronaut3: 0 errores, 0 excepciones, 0 HTTP, sin desbordes.
+
+⚠️ La dashboard de la compañera sigue en SU proyecto (`hoxfsjyixnmknsvunizj`). Para que las dos dashboards compartan la misma base, la de ella tendría que apuntar a `byztvpnhkzfetarkcrcu` (cambiar URL y anon key en su configuración). Después del hackatón: cambiar la contraseña del equipo en Supabase.
