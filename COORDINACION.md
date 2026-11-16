@@ -889,3 +889,31 @@ El usuario decidió que **Claude termina la interfaz** y que **Carol revisa como
 Reportá hallazgos aquí con prioridad (alta / media / baja). Claude los corrige.
 
 ⚠️ **Pendiente:** en la carpeta compartida siguen **5 archivos tuyos sin subir** (`LoginGateView`, `AccessControlView`, `NewProfileModal`, `ProfileSwitcherModal`, `PROJECT_STATUS`: ayuda de nuevo usuario, feedback de MOD-06, IDs y scroll). Claude no los sube por vos. Que **vos o Leandro** decidan si se suben tal cual. Ojo: la guía "How do I create a new user?" todavía menciona *New User* y *Admin Provisioning*, que ya no existen.
+
+
+### [2026-11-15 19:50] Carol → Claude, Leandro · RESPUESTA / APROBACIÓN
+
+- **Luz verde oficial de Carol:** Por indicación de Leandro, **apruebo que `@Claude` modifique directamente los archivos de Frontend (lado Carol: `src/App.jsx`, `src/components/views/*`, `src/components/auth/LoginGateView.jsx`, `src/components/SidebarNav.jsx`, modales y `PROJECT_STATUS.md`)** para integrar sus cambios y resolver las tareas pendientes (`Reload pod`, talla/masa + `PodVeggie3D`, guía en `LoginGateView.jsx`, vista Doctor multipaciente, etc.).
+- **Condiciones de calidad que debes respetar (contrato `DESIGN.md`):**
+  1. Mantener intacta la estética **Swiss Orbital Light** (`#F4F6F9` lienzo, `#FFFFFF` tarjetas, `#0F172A` tinta, `#E14D2A` acento NASA, `Inter` + `JetBrains Mono`) y contraste WCAG AA/AAA.
+  2. Mantener responsividad sin desbordes horizontales (`390×844` y `1440×900`) ni `100vh` fijos (usar `100dvh`).
+  3. Verificar `npm run build` (`exit 0`) y `tests/e2e.mjs` antes de cerrar.
+  4. **Nota de sincronización local:** En la carpeta local hay mejoras previas sin commit en `NewProfileModal.jsx`, `ProfileSwitcherModal.jsx`, `AccessControlView.jsx`, `LoginGateView.jsx` y `PROJECT_STATUS.md`; intégralas o reemplázalas limpiamente según la decisión final de eliminar perfiles locales.
+- **Veredicto:** **APROBADO** para que Claude ejecute los cambios de Frontend.
+
+
+### [2026-11-15 — Claude] @Carol → PEDIDO DE APROBACIÓN FINAL PARA @Leo (cierre antes de las 12)
+
+Gracias por la luz verde. Ya integré todo y lo subí:
+- **Tus 5 mejoras sin subir**, tal cual: IDs de perfil sin colisión, scroll móvil, feedback de MOD-06, `htmlFor`, PROJECT_STATUS paso 11.
+- **Una corrección:** la guía del inicio ahora es *"How do I get an account?"* y explica que las cuentas las crea la administradora de la base, que se piden con *Request Access* y que después se inicia sesión. Ya no menciona *New User* ni *Admin Provisioning*.
+- **Lo de antes (d86d61a):** Reload pod, 3D en Dispenser, talla/masa con nombre real, porciones y viabilidad marcadas como modeladas.
+
+**Verificado:** build exit 0, e2e con la CSP de producción en 1440×900 y 390×844 con 0 errores, 0 excepciones, 0 HTTP y sin desbordes. Extraer → Reload pod → 3D funcionan. `tests/rls.mjs` 20/20. Respeté la paleta Swiss Orbital y `100dvh`; no cambié estilos globales.
+
+**@Carol, por favor pasale esto a Leo para la APROBACIÓN FINAL:**
+1. Abrir https://nasa-space-challenge-team-dyeus.vercel.app con la cuenta Astronauta.
+2. Revisar Astronaut Data (nombre, Body Mass, Height), Medical (porción con nota), Dispenser (estados, Reload pod, 3D) y la pantalla de inicio (guía "How do I get an account?").
+3. Responder aquí: **"APROBADO Leo"** o la lista de cambios. Si hay cambios, los hago antes de las 12.
+
+Antes de grabar o entregar: correr `supabase/reset_demo_pods.sql` (deja los 4 pods del dispensador en ready).
