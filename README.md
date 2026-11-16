@@ -8,7 +8,16 @@ When the astronaut's health log shows a problem, E.D.E.N. prescribes a plant to 
 
 **Live demo:** https://nasa-space-challenge-team-dyeus.vercel.app
 
-> **Sign-in required.** Crew health data is private, so the dashboard opens on a sign-in screen. A demo account for judges is provided in the **submission notes** (credentials are never stored in this public repository).
+> **Sign-in required.** Crew health data is private, so the dashboard opens on a sign-in screen. **Demo accounts for judges are listed on that screen**: tap one to fill the form. All of them use the password `eden2026` and only contain simulated crew data.
+>
+> | Account | Role | What you will see |
+> | --- | --- | --- |
+> | `astronaut1@eden.space` | Astronaut | High stress and poor sleep → prescription and Seed Pod |
+> | `astronaut2@eden.space` | Astronaut | Inflammation and cardiovascular load, larger body mass → scaled servings |
+> | `astronaut3@eden.space` | Astronaut | Stable crew member, no alerts |
+> | `doctor@eden.space` | Flight surgeon | Every crew profile and health record |
+> | `progra@eden.space` | Systems engineer | Health records, Seed Pods and hardware |
+> | `admin@eden.space` | Admin | Everything, plus access requests |
 
 ![Sign-in screen](docs/screenshots/00-login.png)
 

@@ -2,6 +2,18 @@ import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { MISSION_ROLES, useAuth } from '../../context/AuthContext';
 
+// Cuentas demo para los jueces de Space Apps (decisión del equipo: visibles en el inicio).
+// Solo datos de tripulación simulados. Cambiar la contraseña en Supabase después del hackatón.
+const DEMO_PASSWORD = 'eden2026';
+const DEMO_ACCOUNTS = [
+  { email: 'astronaut1@eden.space', role: 'paciente', label: 'Astronaut 1 · high stress' },
+  { email: 'astronaut2@eden.space', role: 'paciente', label: 'Astronaut 2 · inflammation' },
+  { email: 'astronaut3@eden.space', role: 'paciente', label: 'Astronaut 3 · stable' },
+  { email: 'doctor@eden.space', role: 'doctor', label: 'Flight Surgeon' },
+  { email: 'progra@eden.space', role: 'programador', label: 'Systems Engineer' },
+  { email: 'admin@eden.space', role: 'admin', label: 'Mission Admin' },
+];
+
 export default function LoginGateView() {
   const { hasBackendAuth, hasSignUp, signIn, signUpCrew, submitAccessRequest } = useAuth();
 
@@ -235,6 +247,36 @@ export default function LoginGateView() {
             >
               {submitting ? 'Verifying...' : 'Sign In'}
             </button>
+
+            {/* Demo accounts for the Space Apps judges (simulated crew data only) */}
+            <div className="rounded-xl border border-[#E14D2A]/30 bg-[#E14D2A]/5 p-3">
+              <p className="font-mono text-[10px] font-bold tracking-wider text-[#E14D2A] uppercase">
+                Demo accounts for judges · password: <span className="text-[#0F172A]">{DEMO_PASSWORD}</span>
+              </p>
+              <p className="mt-0.5 font-mono text-[10px] text-slate-600">
+                Tap an account to fill the form. All crew data is simulated.
+              </p>
+              <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {DEMO_ACCOUNTS.map((a) => (
+                  <button
+                    key={a.email}
+                    type="button"
+                    onClick={() => {
+                      setEmail(a.email);
+                      setPassword(DEMO_PASSWORD);
+                      setSelectedRoleHint(a.role);
+                      setError(null);
+                    }}
+                    className="cursor-pointer rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-left transition-colors hover:border-[#E14D2A] focus-visible:outline-2 focus-visible:outline-[#E14D2A]"
+                  >
+                    <span className="block font-mono text-[11px] font-semibold break-all text-[#0F172A]">
+                      {a.email}
+                    </span>
+                    <span className="block font-mono text-[10px] text-slate-500">{a.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </form>
         )}
 
