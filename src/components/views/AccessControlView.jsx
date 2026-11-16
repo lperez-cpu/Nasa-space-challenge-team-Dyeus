@@ -34,7 +34,10 @@ export default function AccessControlView() {
       setRequests(Array.isArray(reqs) ? reqs : []);
       setProfiles(Array.isArray(profs) ? profs : []);
     } catch (err) {
-      setNotice(err?.message || 'Role directory requires authenticated session with RLS clearance.');
+      setNotice({
+        type: 'error',
+        text: err?.message || 'Role directory requires authenticated session with RLS clearance.',
+      });
     } finally {
       setLoading(false);
     }
@@ -47,11 +50,19 @@ export default function AccessControlView() {
   async function handleStatus(id, status) {
     if (typeof api.updateAccessRequestStatus !== 'function') return;
     setActionId(id);
+    setNotice(null);
     try {
       await api.updateAccessRequestStatus(id, status);
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      setNotice({
+        type: 'success',
+        text: `Access request marked as ${status}.`,
+      });
     } catch (err) {
-      setNotice(err?.message || 'Unable to update request status.');
+      setNotice({
+        type: 'error',
+        text: err?.message || 'Unable to update request status.',
+      });
     } finally {
       setActionId(null);
     }
@@ -60,12 +71,27 @@ export default function AccessControlView() {
   async function handleCreateUser(e) {
     e.preventDefault();
     if (!hasProvisionApi) return;
+    const trimmedName = newName.trim();
+    const trimmedEmail = newEmail.trim();
+    if (!trimmedName) {
+      setNotice({ type: 'error', text: 'Full name is required to create a crew account.' });
+      return;
+    }
+    if (!trimmedEmail) {
+      setNotice({ type: 'error', text: 'A valid email is required.' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setNotice({ type: 'error', text: 'Temporary password must be at least 6 characters.' });
+      return;
+    }
+
     setNotice(null);
     setCreating(true);
     try {
       await api.provisionUserAccount({
-        full_name: newName.trim(),
-        email: newEmail.trim(),
+        full_name: trimmedName,
+        email: trimmedEmail,
         password: newPassword,
         role: newRole,
       });
@@ -73,10 +99,16 @@ export default function AccessControlView() {
       setNewEmail('');
       setNewPassword('');
       setNewRole('paciente');
-      setNotice('New user account created and assigned to crew directory.');
+      setNotice({
+        type: 'success',
+        text: `New crew account (${trimmedName}) created with role ${newRole}.`,
+      });
       await loadData();
     } catch (err) {
-      setNotice(err?.message || 'Unable to provision new user.');
+      setNotice({
+        type: 'error',
+        text: err?.message || 'Unable to provision new user.',
+      });
     } finally {
       setCreating(false);
     }
@@ -112,8 +144,17 @@ export default function AccessControlView() {
       </div>
 
       {notice && (
-        <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 font-mono text-xs text-sky-900">
-          {notice}
+        <div
+          role={notice.type === 'error' ? 'alert' : 'status'}
+          className={`rounded-xl border px-4 py-3 font-mono text-xs ${
+            notice.type === 'error'
+              ? 'border-red-200 bg-red-50 text-red-800'
+              : notice.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                : 'border-sky-200 bg-sky-50 text-sky-900'
+          }`}
+        >
+          {notice.text}
         </div>
       )}
 
@@ -209,10 +250,14 @@ export default function AccessControlView() {
 
           <form onSubmit={handleCreateUser} className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+              <label
+                htmlFor="admin-new-name"
+                className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase"
+              >
                 Full Name
               </label>
               <input
+                id="admin-new-name"
                 type="text"
                 required
                 value={newName}
@@ -223,10 +268,14 @@ export default function AccessControlView() {
             </div>
 
             <div>
-              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+              <label
+                htmlFor="admin-new-email"
+                className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase"
+              >
                 Email
               </label>
               <input
+                id="admin-new-email"
                 type="email"
                 required
                 value={newEmail}
@@ -237,10 +286,14 @@ export default function AccessControlView() {
             </div>
 
             <div>
-              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+              <label
+                htmlFor="admin-new-password"
+                className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase"
+              >
                 Temporary Password
               </label>
               <input
+                id="admin-new-password"
                 type="password"
                 required
                 minLength={6}
@@ -252,10 +305,14 @@ export default function AccessControlView() {
             </div>
 
             <div>
-              <label className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase">
+              <label
+                htmlFor="admin-new-role"
+                className="mb-1 block font-mono text-[10px] font-semibold text-slate-600 uppercase"
+              >
                 Assigned Role
               </label>
               <select
+                id="admin-new-role"
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-[#0F172A] focus:border-[#E14D2A] focus:outline-none"

@@ -13,8 +13,8 @@ const INITIAL_FORM = {
   suitLink: 'BIOSENSOR-LINK ACTIVE',
 };
 
-function generateProfileId(name, existingCount) {
-  const num = String(existingCount + 4).padStart(2, '0');
+function generateProfileId(name, existingIds = []) {
+  const existingSet = new Set(existingIds.map((id) => String(id).toUpperCase()));
   const lastWord = name
     .trim()
     .split(/\s+/)
@@ -22,7 +22,15 @@ function generateProfileId(name, existingCount) {
     ?.replace(/[^a-zA-Z0-9]/g, '')
     .toUpperCase()
     .slice(0, 8);
-  return `AST-${num}-${lastWord || 'CREW'}`;
+  const suffix = lastWord || 'CREW';
+
+  let counter = existingIds.length + 4;
+  let candidate = `AST-${String(counter).padStart(2, '0')}-${suffix}`;
+  while (existingSet.has(candidate)) {
+    counter += 1;
+    candidate = `AST-${String(counter).padStart(2, '0')}-${suffix}`;
+  }
+  return candidate;
 }
 
 function formatEvaHours(raw) {
@@ -76,8 +84,8 @@ export default function NewProfileModal({ isOpen, onClose, onCreate, existingIds
       return;
     }
 
-    const candidateId = (form.id.trim() || generateProfileId(name, existingIds.length)).toUpperCase();
-    if (existingIds.includes(candidateId)) {
+    const candidateId = (form.id.trim() || generateProfileId(name, existingIds)).toUpperCase();
+    if (existingIds.some((id) => String(id).toUpperCase() === candidateId)) {
       setError(`ID "${candidateId}" already exists. Choose another identifier.`);
       return;
     }
@@ -107,7 +115,7 @@ export default function NewProfileModal({ isOpen, onClose, onCreate, existingIds
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-5 shadow-xl">
+      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-lg border border-slate-200 bg-white p-5 shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3.5">
           <div className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#E14D2A]/10 text-[#E14D2A]">

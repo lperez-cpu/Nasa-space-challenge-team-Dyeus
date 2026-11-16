@@ -43,6 +43,10 @@ export default function LoginGateView() {
   async function handleSignUp(e) {
     e.preventDefault();
     setError(null);
+    if (!signupName.trim()) {
+      setError('Full name is required.');
+      return;
+    }
     if (signupPassword.length < 6) {
       setError('Password must be at least 6 characters.');
       return;
@@ -454,6 +458,28 @@ export default function LoginGateView() {
               </button>
             </form>
           ))}
+
+        {/* User creation guide */}
+        <details className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-700 shadow-2xs">
+          <summary className="cursor-pointer font-mono text-[11px] font-semibold text-[#0F172A] select-none">
+            How do I get an account?
+          </summary>
+          <ul className="mt-2.5 space-y-1.5 font-mono text-[11px] leading-relaxed text-slate-600">
+            <li>
+              <strong className="text-[#0F172A]">1. Accounts are issued by the mission:</strong> the
+              crew database administrator creates each account and assigns its role. There is no
+              public sign-up, because crew health data is private.
+            </li>
+            <li>
+              <strong className="text-[#0F172A]">2. Need one?</strong> Use{' '}
+              <strong>Request Access</strong> above with your name, email and the role you need.
+            </li>
+            <li>
+              <strong className="text-[#0F172A]">3. Then sign in</strong> here with the email and
+              password you receive.
+            </li>
+          </ul>
+        </details>
       </div>
     </div>
   );

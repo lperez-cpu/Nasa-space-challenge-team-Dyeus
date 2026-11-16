@@ -60,7 +60,7 @@ export default function ProfileSwitcherModal({
           </button>
         </div>
 
-        <div className="mt-4 flex max-h-[340px] flex-col gap-2 overflow-y-auto pr-1">
+        <div className="mt-4 flex max-h-[50dvh] flex-col gap-2 overflow-y-auto pr-1">
           {profiles.map((profile) => {
             const isActive = profile.id === activeProfileId;
             return (
@@ -87,7 +87,7 @@ export default function ProfileSwitcherModal({
                         : 'border border-slate-200 bg-white text-slate-700'
                     }`}
                   >
-                    {profile.name.slice(0, 2).toUpperCase()}
+                    {profile.name.trim().slice(0, 2).toUpperCase() || 'CR'}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

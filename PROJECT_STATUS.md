@@ -47,6 +47,7 @@
 | Paso 8 [Carol] | Análisis solo-lectura de `dyeus_app` + implementación Frontend (`AuthContext`, `AccessControlView`, `MOD-06`) y migración a **Login Obligatorio (`LoginGateView.jsx` + `AuthGate`)** sin acceso anónimo a perfiles | Completado (Frontend listo) |
 | Paso 9 [Carol] | Desambiguación de `Switch Profile` -> `Crew Subject` en `SidebarNav.jsx`, escena `DEEP SPACE TRANSIT // ISS-PROVEN VEGGIE BIO-BAY` y retiro de legacy `SolutionPanel.jsx` | Completado |
 | Paso 10 [Carol] | UI para añadir nuevos usuarios: pestaña **New User** (`signUpCrew`, rol seguro `paciente`) en `LoginGateView.jsx` + panel **Add New Crew User** (`provisionUserAccount`) para Admin en `MOD-06` | Completado (Frontend listo) |
+| Paso 11 [Carol] | Corrección de errores al añadir perfiles/usuarios: ID único sin colisión y scroll móvil en `NewProfileModal.jsx`, feedback error/éxito + `htmlFor` en `AccessControlView.jsx`, y guía `"How do I create a new user?"` en `LoginGateView.jsx` | Completado |
 
 ---
 
