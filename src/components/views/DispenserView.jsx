@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircle2, FlaskConical, Lock, ShieldCheck } from 'lucide-react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { CheckCircle2, FlaskConical, Lock, RotateCcw, ShieldCheck } from 'lucide-react';
+import PodVeggie3D from '../three';
 
 const DISPENSE_MS = 2200;
+
+// Estado de un pod que no está listo para extraer (los pods son reutilizables).
+const OUT_LABEL = { growing: 'GROWING', planted: 'PLANTED', harvested: 'HARVESTED', empty: 'EMPTY' };
 
 const norm = (value = '') =>
   String(value)
@@ -20,6 +24,7 @@ export default function DispenserView({
   localDispensed = [],
   extractedPodIds = [],
   onDispensed,
+  onReloadPod,
 }) {
   const vaultApproved = seedVault.find((c) => c.status === 'approved');
 
@@ -32,9 +37,8 @@ export default function DispenserView({
     ]);
 
     if (seedPods.length > 0) {
-      const usable = seedPods.filter(
-        (p) => p.podId && p.plant && p.status !== 'harvested' && p.status !== 'empty',
-      );
+      // Todos los pods de la bóveda: los que no están "ready" se pueden recargar.
+      const usable = seedPods.filter((p) => p.podId && p.plant);
       const mapped = usable.map((p) => {
         const isRx = activeRxNames.has(norm(p.plant));
         const auditMatch =
@@ -42,9 +46,7 @@ export default function DispenserView({
           seedVault.find((c) => norm(c.plant) === norm(p.plant)) ||
           vaultApproved;
         const alreadyOut =
-          p.status === 'growing' ||
-          p.status === 'planted' ||
-          historyKeys.has(String(p.podId).toUpperCase());
+          (p.status && p.status !== 'ready') || historyKeys.has(String(p.podId).toUpperCase());
 
         return {
           id: p.podId,
@@ -105,6 +107,8 @@ export default function DispenserView({
   const [selectedPodId, setSelectedPodId] = useState(null);
   const [phase, setPhase] = useState('idle'); // idle | dispensing | ready
   const [progress, setProgress] = useState(0);
+  const [reloadingId, setReloadingId] = useState(null);
+  const [reloadError, setReloadError] = useState(null);
   const rafRef = useRef(null);
 
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
@@ -130,6 +134,22 @@ export default function DispenserView({
     plantCatalog.find((p) => norm(p.plant) === norm(selectedPod?.plant)) || null;
   const harvestDays = matchingPlant?.harvestDays ?? matchingRx?.harvestDays ?? '—';
   const activeDose = matchingPlant?.dose || matchingRx?.dose || 'therapeutic serving';
+  const doseNote = matchingPlant?.doseNote || matchingRx?.doseNote || null;
+
+  const reload = async (pod) => {
+    if (!onReloadPod || !pod || reloadingId) return;
+    setReloadError(null);
+    setReloadingId(pod.podId);
+    try {
+      await onReloadPod(pod.podId);
+      setPhase('idle');
+      setProgress(0);
+    } catch (err) {
+      setReloadError(err?.message || 'Unable to reload this Seed Pod.');
+    } finally {
+      setReloadingId(null);
+    }
+  };
 
   const handleSelectPod = (podId) => {
     if (phase === 'dispensing') return;
@@ -256,7 +276,11 @@ export default function DispenserView({
                             : 'border-emerald-300 bg-emerald-50 text-emerald-800'
                       }`}
                     >
-                      {pod.isExtracted ? 'EXTRACTED' : pod.isRecommended ? 'RECOMMENDED' : 'READY'}
+                      {pod.isExtracted
+                        ? OUT_LABEL[pod.podStatus] || 'EXTRACTED'
+                        : pod.isRecommended
+                          ? 'RECOMMENDED'
+                          : 'READY'}
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-[#0F172A]">{pod.plant}</span>
@@ -312,10 +336,11 @@ export default function DispenserView({
             </div>
 
             <div className="text-right font-mono">
-              <p className="text-xs font-semibold text-slate-500">GENOMIC VIABILITY</p>
+              <p className="text-xs font-semibold text-slate-500">SEED VIABILITY</p>
               <p className="text-2xl font-bold text-emerald-700 tabular-nums">
                 {selectedPod.viability}%
               </p>
+              <p className="text-[10px] font-semibold text-slate-500">MODELED</p>
             </div>
           </div>
 
@@ -358,12 +383,29 @@ export default function DispenserView({
               </strong>
             </span>
           </div>
+          {doseNote && (
+            <p className="mt-2 font-mono text-[10px] leading-snug text-slate-500">
+              Serving: {activeDose} · {doseNote}
+            </p>
+          )}
         </div>
       ) : (
         <div className="rounded-lg border border-slate-200 bg-[#F8FAFC] p-5 text-sm font-medium text-slate-700">
           No Seed Pod required — no active therapeutic recommendation or available inventory in this
           cycle.
         </div>
+      )}
+
+      {/* Mockup 3D: el Seed Pod entra en la bandeja de Veggie */}
+      {selectedPod && (
+        <Suspense fallback={null}>
+          <PodVeggie3D
+            podId={selectedPod.podId || selectedPod.id}
+            plantName={selectedPod.plant}
+            accent="#E14D2A"
+            height={280}
+          />
+        </Suspense>
       )}
 
       {/* Plug & Play Extraction Action Area */}
@@ -374,19 +416,28 @@ export default function DispenserView({
               {selectedPod.isExtracted ? (
                 <>
                   <p className="max-w-lg text-sm text-slate-600">
-                    Seed Pod <strong className="font-mono text-[#0F172A]">[{podCode}]</strong> has
-                    already been extracted for Veggie cultivation.{' '}
-                    {remainingCount > 0
-                      ? 'Select another ready Seed Pod above to prepare a different species.'
-                      : 'All available Seed Pods in the vault are currently in cultivation.'}
+                    Seed Pod <strong className="font-mono text-[#0F172A]">[{podCode}]</strong> is
+                    out of the vault ({(OUT_LABEL[selectedPod.podStatus] || 'extracted').toLowerCase()}).
+                    Seed Pods are reusable: after the crop, reload the pod with vault seeds and it is
+                    ready again.
+                    {remainingCount > 0 ? ' Or select another ready Seed Pod above.' : ''}
                   </p>
                   <button
                     type="button"
-                    disabled
-                    className="w-full max-w-md cursor-not-allowed rounded-md bg-slate-300 px-6 py-4 font-mono text-sm font-bold tracking-wider text-slate-600 uppercase"
+                    onClick={() => reload(selectedPod)}
+                    disabled={!onReloadPod || reloadingId === selectedPod.podId}
+                    className="inline-flex w-full max-w-md cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-emerald-600 bg-white px-6 py-4 font-mono text-sm font-bold tracking-wider text-emerald-800 uppercase transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-wait disabled:opacity-60"
                   >
-                    SEED POD [{podCode}] ALREADY EXTRACTED
+                    <RotateCcw className={`h-4 w-4 ${reloadingId === selectedPod.podId ? 'animate-spin' : ''}`} />
+                    {reloadingId === selectedPod.podId
+                      ? 'Reloading Seed Pod...'
+                      : `Reload pod [${podCode}] with vault seeds`}
                   </button>
+                  {reloadError && (
+                    <p role="alert" className="font-mono text-xs font-semibold text-red-700">
+                      {reloadError}
+                    </p>
+                  )}
                 </>
               ) : (
                 <>

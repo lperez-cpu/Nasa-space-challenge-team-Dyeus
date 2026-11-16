@@ -11,7 +11,7 @@ import InventoryView from './components/views/InventoryView';
 import MedicalView from './components/views/MedicalView';
 import PlantStatusView from './components/views/PlantStatusView';
 import { AuthProvider, MISSION_ROLES, useAuth } from './context/AuthContext';
-import { DATA_SOURCES, logDispense, useSolutionData } from './data/api';
+import { DATA_SOURCES, logDispense, reloadPod, useSolutionData } from './data/api';
 import { astronautProfile } from './data/mockData';
 
 const PROFILES_STORAGE_KEY = 'eden_crew_profiles';
@@ -59,9 +59,16 @@ function AppContent() {
     }
   }, [activeProfileId]);
 
-  const activeProfile = useMemo(
+  const storedProfile = useMemo(
     () => profiles.find((p) => p.id === activeProfileId) || profiles[0] || astronautProfile,
     [profiles, activeProfileId],
+  );
+  // El nombre que se muestra es el de la cuenta real del astronauta (user_profiles.full_name),
+  // no el de un perfil guardado en el navegador.
+  const ownerName = solutionData.crew?.ownerName;
+  const activeProfile = useMemo(
+    () => (ownerName ? { ...storedProfile, name: ownerName } : storedProfile),
+    [storedProfile, ownerName],
   );
 
   const syncedSolutionData = useMemo(
@@ -118,6 +125,15 @@ function AppContent() {
       ]);
     }
     await logDispense(cartridge);
+    refresh();
+  };
+
+  // Los Seed Pods son reutilizables: recargar devuelve el pod a "ready" en la base.
+  const handleReloadPod = async (podId) => {
+    await reloadPod(podId);
+    const key = String(podId).toUpperCase();
+    setExtractedPodIds((prev) => prev.filter((id) => String(id).toUpperCase() !== key));
+    setLocalDispensed((prev) => prev.filter((d) => String(d.cartridge_id || '').toUpperCase() !== key));
     refresh();
   };
 
@@ -250,6 +266,7 @@ function AppContent() {
               localDispensed={localDispensed}
               extractedPodIds={extractedPodIds}
               onDispensed={handleDispensed}
+              onReloadPod={handleReloadPod}
             />
           )}
 

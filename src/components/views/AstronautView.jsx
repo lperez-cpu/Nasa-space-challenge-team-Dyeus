@@ -76,7 +76,9 @@ export default function AstronautView({
     vitals.spo2,
     vitals.radiationDose,
     vitals.circadianDrift,
-  ];
+    vitals.bodyMass,
+    vitals.height,
+  ].filter(Boolean);
 
   return (
     <section

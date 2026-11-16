@@ -107,6 +107,7 @@ await send("Fetch.enable", { patterns: [
   { urlPattern: "*seed_cartridges*", requestStage: "Request" }, // PATCH del pod a "growing"
   { urlPattern: "*profile_views*", requestStage: "Request" },
   { urlPattern: "*access_requests*", requestStage: "Request" },
+  { urlPattern: "*rpc/reload_pod*", requestStage: "Request" }, // recarga de pods reutilizables
 ] });
 
 // Llena el formulario de LoginGateView (React controlado) y envía. Devuelve el estado del login.
@@ -153,6 +154,14 @@ const btn = (await click("EXTRACT")) === "ok" ? "EXTRACT" : await click("DISPENS
 await sleep(4500);
 await shot("flow-after-dispense");
 report.dispenseFlow = { button: btn, after: (await visibleText())?.slice(0, 1500) };
+// Pods reutilizables: el pod extraído se puede recargar (escritura interceptada).
+// Selecciona el pod recién extraído (botón de la grilla) para ver la opción de recarga.
+const extractedPod = (report.dispenseFlow.after?.match(/Seed Pod \[([A-Z]{2,4}-GEN\d+-\d+)\]/i) || [])[1];
+if (extractedPod) { await click(extractedPod); await sleep(800); }
+report.dispenseFlow.reload = await click("RELOAD POD");
+await sleep(1500);
+await shot("flow-after-reload");
+report.dispenseFlow.has3D = await evalJs("!!document.querySelector('figure canvas, figure [role=img]')");
 await click("Plant Status"); await sleep(REAL_WRITES ? 17000 : 1500);
 await shot("flow-plant-status");
 report.dispenseFlow.plantStatus = (await visibleText())?.slice(0, 1500);

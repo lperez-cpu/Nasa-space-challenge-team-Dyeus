@@ -50,7 +50,7 @@ export default function InventoryView({ seedVault = [], radiation }) {
           </p>
         </div>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="font-mono text-[11px] font-semibold text-emerald-800 uppercase">DNA Authorized</p>
+          <p className="font-mono text-[11px] font-semibold text-emerald-800 uppercase">Authorized</p>
           <p className="mt-1 font-mono text-2xl font-bold text-emerald-700 tabular-nums">
             {approvedCount}
           </p>
@@ -107,7 +107,7 @@ export default function InventoryView({ seedVault = [], radiation }) {
                       color={ok ? 'stroke-emerald-600' : 'stroke-red-600'}
                     />
                     <span className="font-mono text-[9px] font-semibold tracking-wider text-slate-500 uppercase">
-                      VIABILITY
+                      VIABILITY · MODELED
                     </span>
                   </div>
                 </div>

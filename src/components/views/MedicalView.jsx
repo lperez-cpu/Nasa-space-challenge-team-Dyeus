@@ -162,6 +162,9 @@ export default function MedicalView({ alerts, prescriptions = [], onGoToDispense
                           <dd className="text-right font-semibold text-[#0F172A]">{rx.dose}</dd>
                         </div>
                       )}
+                      {rx.doseNote && (
+                        <p className="font-mono text-[10px] leading-snug text-slate-500">{rx.doseNote}</p>
+                      )}
                       {rx.consumptionMethod && (
                         <div className="flex justify-between gap-3">
                           <dt className="font-mono text-slate-500">ISS CONSUMPTION</dt>
